@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/sonofsun61/APIFromSpec/internal/dto"
 	"github.com/sonofsun61/AuthContract/gen/authpb"
 	"google.golang.org/grpc"
 )
@@ -50,4 +51,19 @@ func (c *Client) ValidateToken(ctx context.Context, token string) (valid bool, u
 		return false, "", fmt.Errorf("failed to validate token: %w", err)
 	}
 	return resp.Valid, resp.UserId, nil
+}
+
+func (c *Client) Register(ctx context.Context, req dto.RegisterRequest) (string, error) {
+	r := &authpb.RegisterRequest{
+		Email:     req.Email,
+		FirstName: req.Name,
+		LastName:  req.Surname,
+		Phone:     req.PhoneNumber,
+		Password:  req.Password,
+	}
+	resp, err := c.api.Register(ctx, r)
+	if err != nil {
+		return "", fmt.Errorf("failed to register new user: %w", err)
+	}
+	return resp.Token, nil
 }
