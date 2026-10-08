@@ -10,13 +10,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/sonofsun61/APIFromSpec/internal/config"
-	"github.com/sonofsun61/APIFromSpec/internal/database"
-	"github.com/sonofsun61/APIFromSpec/internal/handler"
-	"github.com/sonofsun61/APIFromSpec/internal/repository/postgres"
-	"github.com/sonofsun61/APIFromSpec/internal/service"
 )
 
 type App struct {
@@ -25,36 +20,9 @@ type App struct {
 	router http.Handler
 }
 
-func NewApp(cfg *config.Config) *App {
-	validate := validator.New()
-	pool := database.MustConnectToDatabase(context.Background(), cfg.ConnString)
-
-	clientRepo := postgres.NewPostgresClientRepository(pool)
-	supplierRepo := postgres.NewPostgresSupplierRepository(pool)
-	productRepo := postgres.NewPostgresProductRepository(pool)
-	imageRepo := postgres.NewPostgresImageRepository(pool)
-
-	clientService := service.NewClientService(clientRepo)
-	supplierService := service.NewSupplierService(supplierRepo)
-	productService := service.NewProductService(productRepo)
-	imageService := service.NewImageService(imageRepo)
-
-	clientHandler := handler.NewClientHandler(clientService, validate)
-	supplierHandler := handler.NewSupplierHandler(supplierService, validate)
-	productHandler := handler.NewProductHandler(productService, validate)
-	imageHandler := handler.NewImageHandler(imageService, validate)
-
-	router := handler.SetUpRouter(clientHandler, supplierHandler, productHandler, imageHandler)
-	return &App{
-		config: cfg,
-		pool:   pool,
-		router: router,
-	}
-}
-
 func (a *App) Run() error {
 	server := &http.Server{
-		Addr: ":8080",
+		Addr:    ":8080",
 		Handler: a.router,
 	}
 	go func() {
