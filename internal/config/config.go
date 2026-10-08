@@ -8,7 +8,8 @@ import (
 )
 
 type Config struct {
-	ConnString string
+	ConnString      string
+	AuthServiceAddr string
 }
 
 func MustLoadConfig() *Config {
@@ -19,7 +20,12 @@ func MustLoadConfig() *Config {
 	password := os.Getenv("DATABASE_PASSWORD")
 	port := os.Getenv("DATABASE_PORT")
 	dbName := os.Getenv("DATABASE_NAME")
+	authAddr := os.Getenv("AUTH_SERVICE_ADDR")
+	if authAddr == "" {
+		panic("AUTH_SERVICE_ADDR is not set")
+	}
 	return &Config{
-		ConnString: fmt.Sprintf("postgres://%s:%s@localhost:%s/%s?sslmode=disable", username, password, port, dbName),
+		ConnString:      fmt.Sprintf("postgres://%s:%s@localhost:%s/%s?sslmode=disable", username, password, port, dbName),
+		AuthServiceAddr: authAddr,
 	}
 }
