@@ -1,19 +1,23 @@
 //go:build wireinject
 // +build wireinject
+
 package app
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/wire"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/sonofsun61/APIFromSpec/internal/authclient"
 	"github.com/sonofsun61/APIFromSpec/internal/config"
 	"github.com/sonofsun61/APIFromSpec/internal/database"
 	"github.com/sonofsun61/APIFromSpec/internal/handler"
 	"github.com/sonofsun61/APIFromSpec/internal/repository/postgres"
 	"github.com/sonofsun61/APIFromSpec/internal/service"
+	"google.golang.org/grpc"
 )
 
 func InitializeApp() *App {
@@ -40,6 +44,10 @@ func InitializeApp() *App {
 		wire.Bind(new(handler.ProductService), new(*service.ProductService)),
 		service.NewImageService,
 		wire.Bind(new(handler.ImageService), new(*service.ImageService)),
+		ProvideAuthConn,
+		authclient.New,
+		wire.Bind(new(handler.AuthService), new(*authclient.Client)),
+		handler.NewAuthHandler,
 		handler.NewClientHandler,
 		handler.NewSupplierHandler,
 		handler.NewProductHandler,
@@ -53,7 +61,7 @@ func InitializeApp() *App {
 func ProvideApp(config *config.Config, pool *pgxpool.Pool, router http.Handler) *App {
 	return &App{
 		config: config,
-		pool: pool,
+		pool:   pool,
 		router: router,
 	}
 }
@@ -63,9 +71,17 @@ func ProvideContext() context.Context {
 }
 
 func ProvideValidatorOptions() []validator.Option {
-    return nil
+	return nil
 }
 
 func ProvideConnString(cfg *config.Config) database.ConnString {
 	return database.ConnString(cfg.ConnString)
+}
+
+func ProvideAuthConn(cfg *config.Config) *grpc.ClientConn {
+	grpcClientConn, err := authclient.NewConn(cfg.AuthServiceAddr)
+	if err != nil {
+		panic(fmt.Sprintf("could not create auth service connection: %v", err))
+	}
+	return grpcClientConn
 }

@@ -51,10 +51,44 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(dto.TokenResponse{Token: token})
 }
 
-// func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
-// 	var req dto.
-// 	json.NewDecoder(r.Body).Decode(req)
-// }
+func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
+	var req dto.AuthRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON body", http.StatusBadRequest)
+		return
+	}
+	if err := h.validate.Struct(req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	token, err := h.service.Login(r.Context(), req.Email, req.Password)
+	if err != nil {
+		writeAuthError(w, err)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	setCacheControl(w, "no-store")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(dto.TokenResponse{Token: token})
+}
+
+func (h *AuthHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
+	var req dto.ResetPasswordRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON body", http.StatusBadRequest)
+		return
+	}
+	if err := h.validate.Struct(req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if err := h.service.ResetPassword(r.Context(), req.Email); err != nil {
+		writeAuthError(w, err)
+		return
+	}
+	setCacheControl(w, "no-store")
+	w.WriteHeader(http.StatusNoContent)
+}
 
 func writeAuthError(w http.ResponseWriter, err error) {
 	log.Printf("auth service error: %v", err)

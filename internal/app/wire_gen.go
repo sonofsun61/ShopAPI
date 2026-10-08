@@ -8,13 +8,16 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"github.com/go-playground/validator/v10"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/sonofsun61/APIFromSpec/internal/authclient"
 	"github.com/sonofsun61/APIFromSpec/internal/config"
 	"github.com/sonofsun61/APIFromSpec/internal/database"
 	"github.com/sonofsun61/APIFromSpec/internal/handler"
 	"github.com/sonofsun61/APIFromSpec/internal/repository/postgres"
 	"github.com/sonofsun61/APIFromSpec/internal/service"
+	"google.golang.org/grpc"
 	"net/http"
 )
 
@@ -39,7 +42,10 @@ func InitializeApp() *App {
 	postgresImageRepository := postgres.NewPostgresImageRepository(pool)
 	imageService := service.NewImageService(postgresImageRepository)
 	imageHandler := handler.NewImageHandler(imageService, validate)
-	httpHandler := handler.SetUpRouter(clientHandler, supplierHandler, productHandler, imageHandler)
+	clientConn := ProvideAuthConn(configConfig)
+	client := authclient.New(clientConn)
+	authHandler := handler.NewAuthHandler(client, validate)
+	httpHandler := handler.SetUpRouter(clientHandler, supplierHandler, productHandler, imageHandler, authHandler)
 	app := ProvideApp(configConfig, pool, httpHandler)
 	return app
 }
@@ -64,4 +70,12 @@ func ProvideValidatorOptions() []validator.Option {
 
 func ProvideConnString(cfg *config.Config) database.ConnString {
 	return database.ConnString(cfg.ConnString)
+}
+
+func ProvideAuthConn(cfg *config.Config) *grpc.ClientConn {
+	grpcClientConn, err := authclient.NewConn(cfg.AuthServiceAddr)
+	if err != nil {
+		panic(fmt.Sprintf("could not create auth service connection: %v", err))
+	}
+	return grpcClientConn
 }

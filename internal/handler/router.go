@@ -9,7 +9,9 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
-func SetUpRouter(clientHandler *ClientHandler, supplierHandler *SupplierHandler, productHandler *ProductHandler, imageHandler *ImageHandler) http.Handler {
+func SetUpRouter(clientHandler *ClientHandler, supplierHandler *SupplierHandler,
+	productHandler *ProductHandler, imageHandler *ImageHandler,
+	authHandler *AuthHandler) http.Handler {
 	r := chi.NewRouter()
 	r.Get("/swagger/*", httpSwagger.WrapHandler)
 	r.Route(routes.ClientsBasePath, func(r chi.Router) {
@@ -39,5 +41,8 @@ func SetUpRouter(clientHandler *ClientHandler, supplierHandler *SupplierHandler,
 		r.Delete("/{id}", imageHandler.DeleteImage)
 		r.Get("/{id}", imageHandler.GetImageByImageID)
 	})
+	r.Post(routes.RegisterBasePath, authHandler.Register)
+	r.Post(routes.AuthBasePath, authHandler.Login)
+	r.Post(routes.ResetPasswordBasePath, authHandler.ResetPassword)
 	return r
 }
