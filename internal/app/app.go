@@ -2,8 +2,9 @@ package app
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -18,6 +19,7 @@ type App struct {
 	config *config.Config
 	pool   *pgxpool.Pool
 	router http.Handler
+	logger *slog.Logger
 }
 
 func (a *App) Run() error {
@@ -26,9 +28,9 @@ func (a *App) Run() error {
 		Handler: a.router,
 	}
 	go func() {
-		log.Println("server started")
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Printf("server error: %v", err)
+		a.logger.Info("server started", "addr", server.Addr)
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			a.logger.Error("server error", "err", err)
 		}
 	}()
 	quit := make(chan os.Signal, 1)
@@ -37,12 +39,12 @@ func (a *App) Run() error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	log.Println("Server is shutting down...")
+	a.logger.Info("server is shutting down")
 
 	if err := server.Shutdown(ctx); err != nil {
 		return fmt.Errorf("server forced to shutdown: %w", err)
 	}
 	a.pool.Close()
-	log.Println("Server has been stopped")
+	a.logger.Info("server has been stopped")
 	return nil
 }

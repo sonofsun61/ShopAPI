@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/sonofsun61/APIFromSpec/internal/app"
 )
 
@@ -12,6 +15,7 @@ import (
 func main() {
 	application := app.InitializeApp()
 	if err := application.Run(); err != nil {
-		panic(err)
+		fmt.Fprintln(os.Stderr, "application stopped:", err)
+		os.Exit(1)
 	}
 }

@@ -6,6 +6,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
@@ -15,6 +16,7 @@ import (
 	"github.com/sonofsun61/APIFromSpec/internal/config"
 	"github.com/sonofsun61/APIFromSpec/internal/database"
 	"github.com/sonofsun61/APIFromSpec/internal/handler"
+	"github.com/sonofsun61/APIFromSpec/internal/logger"
 	"github.com/sonofsun61/APIFromSpec/internal/middleware"
 	"github.com/sonofsun61/APIFromSpec/internal/repository/postgres"
 	"github.com/sonofsun61/APIFromSpec/internal/service"
@@ -26,6 +28,7 @@ func InitializeApp() *App {
 		ProvideContext,
 		ProvideValidatorOptions,
 		ProvideConnString,
+		logger.NewLogger,
 		validator.New,
 		config.MustLoadConfig,
 		database.MustConnectToDatabase,
@@ -60,11 +63,12 @@ func InitializeApp() *App {
 	return nil
 }
 
-func ProvideApp(config *config.Config, pool *pgxpool.Pool, router http.Handler) *App {
+func ProvideApp(config *config.Config, pool *pgxpool.Pool, router http.Handler, logger *slog.Logger) *App {
 	return &App{
 		config: config,
 		pool:   pool,
 		router: router,
+		logger: logger,
 	}
 }
 

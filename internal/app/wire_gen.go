@@ -15,9 +15,11 @@ import (
 	"github.com/sonofsun61/APIFromSpec/internal/config"
 	"github.com/sonofsun61/APIFromSpec/internal/database"
 	"github.com/sonofsun61/APIFromSpec/internal/handler"
+	"github.com/sonofsun61/APIFromSpec/internal/logger"
 	"github.com/sonofsun61/APIFromSpec/internal/repository/postgres"
 	"github.com/sonofsun61/APIFromSpec/internal/service"
 	"google.golang.org/grpc"
+	"log/slog"
 	"net/http"
 )
 
@@ -46,17 +48,19 @@ func InitializeApp() *App {
 	client := authclient.New(clientConn)
 	authHandler := handler.NewAuthHandler(client, validate)
 	httpHandler := handler.SetUpRouter(clientHandler, supplierHandler, productHandler, imageHandler, authHandler, client)
-	app := ProvideApp(configConfig, pool, httpHandler)
+	slogLogger := logger.NewLogger()
+	app := ProvideApp(configConfig, pool, httpHandler, slogLogger)
 	return app
 }
 
 // wire.go:
 
-func ProvideApp(config2 *config.Config, pool *pgxpool.Pool, router http.Handler) *App {
+func ProvideApp(config2 *config.Config, pool *pgxpool.Pool, router http.Handler, logger2 *slog.Logger) *App {
 	return &App{
 		config: config2,
 		pool:   pool,
 		router: router,
+		logger: logger2,
 	}
 }
 
