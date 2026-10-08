@@ -7,8 +7,10 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func MustConnectToDatabase(ctx context.Context, connString string) *pgxpool.Pool {
-	pool, err := pgxpool.New(ctx, connString)
+type ConnString string
+
+func MustConnectToDatabase(ctx context.Context, connString ConnString) *pgxpool.Pool {
+	pool, err := pgxpool.New(ctx, string(connString))
 	if err != nil {
 		panic(fmt.Sprintf("could not create pgxpool: %v", err))
 	}
