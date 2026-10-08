@@ -15,6 +15,7 @@ import (
 	"github.com/sonofsun61/APIFromSpec/internal/config"
 	"github.com/sonofsun61/APIFromSpec/internal/database"
 	"github.com/sonofsun61/APIFromSpec/internal/handler"
+	"github.com/sonofsun61/APIFromSpec/internal/middleware"
 	"github.com/sonofsun61/APIFromSpec/internal/repository/postgres"
 	"github.com/sonofsun61/APIFromSpec/internal/service"
 	"google.golang.org/grpc"
@@ -48,6 +49,7 @@ func InitializeApp() *App {
 		authclient.New,
 		wire.Bind(new(handler.AuthService), new(*authclient.Client)),
 		handler.NewAuthHandler,
+		wire.Bind(new(middleware.TokenValidator), new(*authclient.Client)),
 		handler.NewClientHandler,
 		handler.NewSupplierHandler,
 		handler.NewProductHandler,

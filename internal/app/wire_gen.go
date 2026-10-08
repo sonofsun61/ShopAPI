@@ -45,7 +45,7 @@ func InitializeApp() *App {
 	clientConn := ProvideAuthConn(configConfig)
 	client := authclient.New(clientConn)
 	authHandler := handler.NewAuthHandler(client, validate)
-	httpHandler := handler.SetUpRouter(clientHandler, supplierHandler, productHandler, imageHandler, authHandler)
+	httpHandler := handler.SetUpRouter(clientHandler, supplierHandler, productHandler, imageHandler, authHandler, client)
 	app := ProvideApp(configConfig, pool, httpHandler)
 	return app
 }
