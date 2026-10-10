@@ -3,10 +3,15 @@ package authclient
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/sonofsun61/APIFromSpec/internal/dto"
 	"github.com/sonofsun61/AuthContract/gen/authpb"
 	"google.golang.org/grpc"
+)
+
+const (
+	callTimeout = 3 * time.Second
 )
 
 type Client struct {
@@ -24,7 +29,9 @@ func (c *Client) Login(ctx context.Context, email, password string) (string, err
 		Login:    email,
 		Password: password,
 	}
-	resp, err := c.api.Login(ctx, req)
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, callTimeout)
+	defer cancel()
+	resp, err := c.api.Login(ctxWithTimeout, req)
 	if err != nil {
 		return "", fmt.Errorf("failed to get token: %w", err)
 	}
@@ -35,7 +42,9 @@ func (c *Client) ResetPassword(ctx context.Context, email string) error {
 	req := &authpb.ResetPasswordRequest{
 		Email: email,
 	}
-	_, err := c.api.ResetPassword(ctx, req)
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, callTimeout)
+	defer cancel()
+	_, err := c.api.ResetPassword(ctxWithTimeout, req)
 	if err != nil {
 		return fmt.Errorf("failed to reset password: %w", err)
 	}
@@ -46,7 +55,9 @@ func (c *Client) ValidateToken(ctx context.Context, token string) (valid bool, u
 	req := &authpb.ValidateTokenRequest{
 		Token: token,
 	}
-	resp, err := c.api.ValidateToken(ctx, req)
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, callTimeout)
+	defer cancel()
+	resp, err := c.api.ValidateToken(ctxWithTimeout, req)
 	if err != nil {
 		return false, "", fmt.Errorf("failed to validate token: %w", err)
 	}
@@ -61,7 +72,9 @@ func (c *Client) Register(ctx context.Context, req dto.RegisterRequest) (string,
 		Phone:     req.PhoneNumber,
 		Password:  req.Password,
 	}
-	resp, err := c.api.Register(ctx, r)
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, callTimeout)
+	defer cancel()
+	resp, err := c.api.Register(ctxWithTimeout, r)
 	if err != nil {
 		return "", fmt.Errorf("failed to register new user: %w", err)
 	}

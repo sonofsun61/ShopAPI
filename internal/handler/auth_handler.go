@@ -101,6 +101,9 @@ func (h *AuthHandler) writeAuthError(w http.ResponseWriter, err error) {
 	case codes.Unauthenticated:
 		h.logger.Warn("authentication rejected", "code", code.String())
 		http.Error(w, "invalid credentials", http.StatusUnauthorized)
+	case codes.DeadlineExceeded:
+		h.logger.Warn("auth service timed out", "code", code.String(), "err", err)
+		http.Error(w, "authentication service timed out", http.StatusGatewayTimeout)
 	default:
 		h.logger.Error("auth service error", "code", code.String(), "err", err)
 		http.Error(w, "internal server error", http.StatusInternalServerError)
