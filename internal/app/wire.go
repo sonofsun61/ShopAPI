@@ -63,12 +63,15 @@ func InitializeApp() *App {
 	return nil
 }
 
-func ProvideApp(config *config.Config, pool *pgxpool.Pool, router http.Handler, logger *slog.Logger) *App {
+func ProvideApp(config *config.Config, pool *pgxpool.Pool, 
+		router http.Handler, logger *slog.Logger, 
+		authConn *grpc.ClientConn) *App {
 	return &App{
 		config: config,
 		pool:   pool,
 		router: router,
 		logger: logger,
+		authConn: authConn,
 	}
 }
 

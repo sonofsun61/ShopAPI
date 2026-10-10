@@ -49,18 +49,21 @@ func InitializeApp() *App {
 	client := authclient.New(clientConn)
 	authHandler := handler.NewAuthHandler(client, validate, slogLogger)
 	httpHandler := handler.SetUpRouter(clientHandler, supplierHandler, productHandler, imageHandler, authHandler, client, slogLogger)
-	app := ProvideApp(configConfig, pool, httpHandler, slogLogger)
+	app := ProvideApp(configConfig, pool, httpHandler, slogLogger, clientConn)
 	return app
 }
 
 // wire.go:
 
-func ProvideApp(config2 *config.Config, pool *pgxpool.Pool, router http.Handler, logger2 *slog.Logger) *App {
+func ProvideApp(config2 *config.Config, pool *pgxpool.Pool,
+	router http.Handler, logger2 *slog.Logger,
+	authConn *grpc.ClientConn) *App {
 	return &App{
-		config: config2,
-		pool:   pool,
-		router: router,
-		logger: logger2,
+		config:   config2,
+		pool:     pool,
+		router:   router,
+		logger:   logger2,
+		authConn: authConn,
 	}
 }
 

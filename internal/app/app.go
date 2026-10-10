@@ -13,6 +13,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/sonofsun61/APIFromSpec/internal/config"
+	"google.golang.org/grpc"
 )
 
 type App struct {
@@ -20,10 +21,16 @@ type App struct {
 	pool   *pgxpool.Pool
 	router http.Handler
 	logger *slog.Logger
+	authConn *grpc.ClientConn
 }
 
 func (a *App) Run() error {
 	defer a.pool.Close()
+	defer func()  {
+		if err := a.authConn.Close(); err != nil {
+			a.logger.Error("failed to close auth connection", "err", err)
+		}
+	}()
 	server := &http.Server{
 		Addr:    ":8080",
 		Handler: a.router,
