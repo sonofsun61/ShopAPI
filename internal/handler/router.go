@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -12,14 +13,15 @@ import (
 
 func SetUpRouter(clientHandler *ClientHandler, supplierHandler *SupplierHandler,
 	productHandler *ProductHandler, imageHandler *ImageHandler,
-	authHandler *AuthHandler, tokenValidator middleware.TokenValidator) http.Handler {
+	authHandler *AuthHandler, tokenValidator middleware.TokenValidator,
+	logger *slog.Logger) http.Handler {
 	r := chi.NewRouter()
 	r.Get("/swagger/*", httpSwagger.WrapHandler)
 	r.Post(routes.RegisterBasePath, authHandler.Register)
 	r.Post(routes.AuthBasePath, authHandler.Login)
 	r.Post(routes.ResetPasswordBasePath, authHandler.ResetPassword)
 	r.Group(func(r chi.Router) {
-		r.Use(middleware.Auth(tokenValidator))
+		r.Use(middleware.Auth(tokenValidator, logger))
 		r.Route(routes.ClientsBasePath, func(r chi.Router) {
 			r.Post("/", clientHandler.CreateClient)
 			r.Delete("/{id}", clientHandler.DeleteClientByID)

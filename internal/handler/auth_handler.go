@@ -3,7 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
@@ -21,12 +21,14 @@ type AuthService interface {
 type AuthHandler struct {
 	service  AuthService
 	validate *validator.Validate
+	logger   *slog.Logger
 }
 
-func NewAuthHandler(service AuthService, validate *validator.Validate) *AuthHandler {
+func NewAuthHandler(service AuthService, validate *validator.Validate, logger *slog.Logger) *AuthHandler {
 	return &AuthHandler{
 		service:  service,
 		validate: validate,
+		logger:   logger,
 	}
 }
 
@@ -42,7 +44,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 	token, err := h.service.Register(r.Context(), req)
 	if err != nil {
-		writeAuthError(w, err)
+		h.writeAuthError(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -63,7 +65,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 	token, err := h.service.Login(r.Context(), req.Email, req.Password)
 	if err != nil {
-		writeAuthError(w, err)
+		h.writeAuthError(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -83,21 +85,24 @@ func (h *AuthHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.service.ResetPassword(r.Context(), req.Email); err != nil {
-		writeAuthError(w, err)
+		h.writeAuthError(w, err)
 		return
 	}
 	setCacheControl(w, "no-store")
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func writeAuthError(w http.ResponseWriter, err error) {
-	log.Printf("auth service error: %v", err)
+func (h *AuthHandler) writeAuthError(w http.ResponseWriter, err error) {
+	code := status.Code(err)
 	switch status.Code(err) {
 	case codes.Unavailable:
+		h.logger.Error("auth service unavailable", "code", code.String(), "err", err)
 		http.Error(w, "authentication service unavailable", http.StatusServiceUnavailable)
 	case codes.Unauthenticated:
+		h.logger.Error("authentication rejected", "code", code.String())
 		http.Error(w, "invalid credentials", http.StatusUnauthorized)
 	default:
+		h.logger.Error("auth service error", "code", code.String(), "err", err)
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 	}
 }

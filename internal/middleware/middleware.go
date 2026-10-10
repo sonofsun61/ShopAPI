@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"net/http"
 	"strings"
 )
@@ -11,7 +11,7 @@ type TokenValidator interface {
 	ValidateToken(ctx context.Context, token string) (valid bool, userID string, err error)
 }
 
-func Auth(validator TokenValidator) func(http.Handler) http.Handler {
+func Auth(validator TokenValidator, logger *slog.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			token, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer ")
@@ -21,7 +21,7 @@ func Auth(validator TokenValidator) func(http.Handler) http.Handler {
 			}
 			valid, _, err := validator.ValidateToken(r.Context(), token)
 			if err != nil {
-				log.Printf("token validation failed: %v", err)
+				logger.Error("token validation error", "err", err)
 				http.Error(w, "failed to validate token", http.StatusServiceUnavailable)
 				return
 			}
