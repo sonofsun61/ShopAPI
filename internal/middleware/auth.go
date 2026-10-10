@@ -7,6 +7,8 @@ import (
 	"strings"
 )
 
+type userIDKey struct{}
+
 type TokenValidator interface {
 	ValidateToken(ctx context.Context, token string) (valid bool, userID string, err error)
 }
@@ -19,7 +21,7 @@ func Auth(validator TokenValidator, logger *slog.Logger) func(http.Handler) http
 				http.Error(w, "missing or invalid Authorization header", http.StatusUnauthorized)
 				return
 			}
-			valid, _, err := validator.ValidateToken(r.Context(), token)
+			valid, userID, err := validator.ValidateToken(r.Context(), token)
 			if err != nil {
 				logger.Error("token validation error", "err", err)
 				http.Error(w, "failed to validate token", http.StatusServiceUnavailable)
@@ -29,7 +31,8 @@ func Auth(validator TokenValidator, logger *slog.Logger) func(http.Handler) http
 				http.Error(w, "invalid token or expired token", http.StatusUnauthorized)
 				return
 			}
-			next.ServeHTTP(w, r)
+			ctx := context.WithValue(r.Context(), userIDKey{}, userID)
+			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
 }
