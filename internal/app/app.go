@@ -34,6 +34,8 @@ func (a *App) Run() error {
 	server := &http.Server{
 		Addr:    ":8080",
 		Handler: a.router,
+		ReadHeaderTimeout: 5 * time.Second,
+		IdleTimeout: 60 * time.Second,
 	}
 
 	listener, err := net.Listen("tcp", server.Addr)
