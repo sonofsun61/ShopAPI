@@ -115,7 +115,7 @@ func (h *SupplierHandler) UpdateSupplierAddress(w http.ResponseWriter, r *http.R
 	}
 	if err := h.service.UpdateSupplierAddress(r.Context(), id, req.Country, req.City, req.Street); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			http.Error(w, "product not found", http.StatusNotFound)
+			http.Error(w, "supplier not found", http.StatusNotFound)
 			return
 		}
 		writeInternalError(w, r, h.logger, err)
@@ -144,7 +144,7 @@ func (h *SupplierHandler) DeleteSupplier(w http.ResponseWriter, r *http.Request)
 	}
 	if err := h.service.DeleteSupplier(r.Context(), id); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			http.Error(w, "product not found", http.StatusNotFound)
+			http.Error(w, "supplier not found", http.StatusNotFound)
 			return
 		}
 		writeInternalError(w, r, h.logger, err)
@@ -216,7 +216,7 @@ func (h *SupplierHandler) GetSupplierByID(w http.ResponseWriter, r *http.Request
 	supplierData, err := h.service.GetSupplierByID(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			http.Error(w, "product not found", http.StatusNotFound)
+			http.Error(w, "supplier not found", http.StatusNotFound)
 			return
 		}
 		writeInternalError(w, r, h.logger, err)
