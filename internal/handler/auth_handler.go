@@ -99,7 +99,7 @@ func (h *AuthHandler) writeAuthError(w http.ResponseWriter, err error) {
 		h.logger.Error("auth service unavailable", "code", code.String(), "err", err)
 		http.Error(w, "authentication service unavailable", http.StatusServiceUnavailable)
 	case codes.Unauthenticated:
-		h.logger.Error("authentication rejected", "code", code.String())
+		h.logger.Warn("authentication rejected", "code", code.String())
 		http.Error(w, "invalid credentials", http.StatusUnauthorized)
 	default:
 		h.logger.Error("auth service error", "code", code.String(), "err", err)

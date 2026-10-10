@@ -16,6 +16,7 @@ func SetUpRouter(clientHandler *ClientHandler, supplierHandler *SupplierHandler,
 	authHandler *AuthHandler, tokenValidator middleware.TokenValidator,
 	logger *slog.Logger) http.Handler {
 	r := chi.NewRouter()
+	r.Use(middleware.Logging(logger))
 	r.Get("/swagger/*", httpSwagger.WrapHandler)
 	r.Post(routes.RegisterBasePath, authHandler.Register)
 	r.Post(routes.AuthBasePath, authHandler.Login)
