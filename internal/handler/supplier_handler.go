@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -27,12 +28,14 @@ type SupplierService interface {
 type SupplierHandler struct {
 	service  SupplierService
 	validate *validator.Validate
+	logger *slog.Logger
 }
 
-func NewSupplierHandler(service SupplierService, validate *validator.Validate) *SupplierHandler {
+func NewSupplierHandler(service SupplierService, validate *validator.Validate, logger *slog.Logger) *SupplierHandler {
 	return &SupplierHandler{
 		service:  service,
 		validate: validate,
+		logger: logger,
 	}
 }
 
@@ -63,7 +66,7 @@ func (h *SupplierHandler) AddSupplier(w http.ResponseWriter, r *http.Request) {
 	}
 	newSupplierID, err := h.service.AddSupplier(r.Context(), newSupplierData, req.Country, req.City, req.Street)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeInternalError(w, r, h.logger, err)
 		return
 	}
 	resp := dto.SupplierResponse{
@@ -112,10 +115,10 @@ func (h *SupplierHandler) UpdateSupplierAddress(w http.ResponseWriter, r *http.R
 	}
 	if err := h.service.UpdateSupplierAddress(r.Context(), id, req.Country, req.City, req.Street); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			http.Error(w, err.Error(), http.StatusNotFound)
+			http.Error(w, "product not found", http.StatusNotFound)
 			return
 		}
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeInternalError(w, r, h.logger, err)
 		return
 	}
 	setCacheControl(w, "no-store")
@@ -141,10 +144,10 @@ func (h *SupplierHandler) DeleteSupplier(w http.ResponseWriter, r *http.Request)
 	}
 	if err := h.service.DeleteSupplier(r.Context(), id); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			http.Error(w, err.Error(), http.StatusNotFound)
+			http.Error(w, "product not found", http.StatusNotFound)
 			return
 		}
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeInternalError(w, r, h.logger, err)
 		return
 	}
 	setCacheControl(w, "no-store")
@@ -182,7 +185,7 @@ func (h *SupplierHandler) GetSuppliers(w http.ResponseWriter, r *http.Request) {
 	}
 	suppliers, err := h.service.GetSuppliers(r.Context(), limit, offset)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeInternalError(w, r, h.logger, err)
 		return
 	}
 	resp := mapper.SupplierWithAddressesToDTO(suppliers)
@@ -213,10 +216,10 @@ func (h *SupplierHandler) GetSupplierByID(w http.ResponseWriter, r *http.Request
 	supplierData, err := h.service.GetSupplierByID(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			http.Error(w, err.Error(), http.StatusNotFound)
+			http.Error(w, "product not found", http.StatusNotFound)
 			return
 		}
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeInternalError(w, r, h.logger, err)
 		return
 	}
 	resp := mapper.SupplierWithAddressToDTO(supplierData)
