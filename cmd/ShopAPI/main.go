@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/sonofsun61/APIFromSpec/internal/app"
-	"github.com/sonofsun61/APIFromSpec/internal/config"
 )
 
 // @title ShopAPI
@@ -11,9 +13,9 @@ import (
 // @host localhost:8080
 // @BasePath /api/v1
 func main() {
-	cfg := config.MustLoadConfig()
-	application := app.NewApp(cfg)
+	application := app.InitializeApp()
 	if err := application.Run(); err != nil {
-		panic(err)
+		fmt.Fprintln(os.Stderr, "application stopped:", err)
+		os.Exit(1)
 	}
 }

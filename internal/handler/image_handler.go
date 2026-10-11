@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"log/slog"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -24,12 +25,14 @@ type ImageService interface {
 type ImageHandler struct {
 	service  ImageService
 	validate *validator.Validate
+	logger *slog.Logger
 }
 
-func NewImageHandler(service ImageService, validate *validator.Validate) *ImageHandler {
+func NewImageHandler(service ImageService, validate *validator.Validate, logger *slog.Logger) *ImageHandler {
 	return &ImageHandler{
 		service:  service,
 		validate: validate,
+		logger: logger,
 	}
 }
 
@@ -58,10 +61,10 @@ func (h *ImageHandler) AddImage(w http.ResponseWriter, r *http.Request) {
 	}
 	if err = h.service.AddImage(r.Context(), imageBytes, id); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			http.Error(w, err.Error(), http.StatusNotFound)
+			http.Error(w, "image not found", http.StatusNotFound)
 			return
 		}
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeInternalError(w, r, h.logger, err)
 		return
 	}
 	setCacheControl(w, "no-store")
@@ -93,10 +96,10 @@ func (h *ImageHandler) ChangeImage(w http.ResponseWriter, r *http.Request) {
 	}
 	if err = h.service.ChangeImage(r.Context(), id, imageBytes); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			http.Error(w, err.Error(), http.StatusNotFound)
+			http.Error(w, "image not found", http.StatusNotFound)
 			return
 		}
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeInternalError(w, r, h.logger, err)
 		return
 	}
 	setCacheControl(w, "no-store")
@@ -122,10 +125,10 @@ func (h *ImageHandler) DeleteImage(w http.ResponseWriter, r *http.Request) {
 	}
 	if err = h.service.DeleteImage(r.Context(), id); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			http.Error(w, err.Error(), http.StatusNotFound)
+			http.Error(w, "image not found", http.StatusNotFound)
 			return
 		}
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeInternalError(w, r, h.logger, err)
 		return
 	}
 	setCacheControl(w, "no-store")
@@ -153,10 +156,10 @@ func (h *ImageHandler) GetImageByProductID(w http.ResponseWriter, r *http.Reques
 	image, err := h.service.GetImageByProductID(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			http.Error(w, err.Error(), http.StatusNotFound)
+			http.Error(w, "image not found", http.StatusNotFound)
 			return
 		}
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeInternalError(w, r, h.logger, err)
 		return
 	}
 	resp := image.Image
@@ -188,10 +191,10 @@ func (h *ImageHandler) GetImageByImageID(w http.ResponseWriter, r *http.Request)
 	image, err := h.service.GetImageByImageID(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			http.Error(w, err.Error(), http.StatusNotFound)
+			http.Error(w, "image not found", http.StatusNotFound)
 			return
 		}
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeInternalError(w, r, h.logger, err)
 		return
 	}
 	resp := image.Image

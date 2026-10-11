@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -28,12 +29,14 @@ type ProductService interface {
 type ProductHandler struct {
 	service  ProductService
 	validate *validator.Validate
+	logger *slog.Logger
 }
 
-func NewProductHandler(service ProductService, validate *validator.Validate) *ProductHandler {
+func NewProductHandler(service ProductService, validate *validator.Validate, logger *slog.Logger) *ProductHandler {
 	return &ProductHandler{
 		service:  service,
 		validate: validate,
+		logger: logger,
 	}
 }
 
@@ -71,7 +74,7 @@ func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 	}
 	product, err := h.service.CreateProduct(r.Context(), newProductData)
 	if err != nil {
-		http.Error(w, "failed to create new product", http.StatusInternalServerError)
+		writeInternalError(w, r, h.logger, err)
 		return
 	}
 	resp := dto.ProductResponse{
@@ -119,14 +122,14 @@ func (h *ProductHandler) DecreaseStock(w http.ResponseWriter, r *http.Request) {
 	err = h.service.DecreaseStock(r.Context(), id, req.Amount)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			http.Error(w, err.Error(), http.StatusNotFound)
+			http.Error(w, "product not found", http.StatusNotFound)
 			return
 		}
 		if errors.Is(err, service.ErrInvalidAmount) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeInternalError(w, r, h.logger, err)
 		return
 	}
 	setCacheControl(w, "no-store")
@@ -154,10 +157,10 @@ func (h *ProductHandler) GetProductByID(w http.ResponseWriter, r *http.Request) 
 	product, err := h.service.GetProductByID(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			http.Error(w, err.Error(), http.StatusNotFound)
+			http.Error(w, "product not found", http.StatusNotFound)
 			return
 		}
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeInternalError(w, r, h.logger, err)
 		return
 	}
 	resp := mapper.ProductToDTO(product)
@@ -198,7 +201,7 @@ func (h *ProductHandler) GetAllProducts(w http.ResponseWriter, r *http.Request) 
 	}
 	products, err := h.service.GetAllProducts(r.Context(), limit, offset)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeInternalError(w, r, h.logger, err)
 		return
 	}
 	resp := mapper.ProductsToDTO(products)
@@ -227,10 +230,10 @@ func (h *ProductHandler) DeleteProductByID(w http.ResponseWriter, r *http.Reques
 	}
 	if err := h.service.DeleteProductByID(r.Context(), id); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			http.Error(w, err.Error(), http.StatusNotFound)
+			http.Error(w, "product not found", http.StatusNotFound)
 			return
 		}
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeInternalError(w, r, h.logger, err)
 		return
 	}
 	setCacheControl(w, "no-store")

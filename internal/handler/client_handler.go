@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -27,12 +28,14 @@ type ClientService interface {
 type ClientHandler struct {
 	service  ClientService
 	validate *validator.Validate
+	logger *slog.Logger
 }
 
-func NewClientHandler(service ClientService, validate *validator.Validate) *ClientHandler {
+func NewClientHandler(service ClientService, validate *validator.Validate, logger *slog.Logger) *ClientHandler {
 	return &ClientHandler{
 		service:  service,
 		validate: validate,
+		logger: logger,
 	}
 }
 
@@ -64,7 +67,7 @@ func (h *ClientHandler) CreateClient(w http.ResponseWriter, r *http.Request) {
 	}
 	newID, err := h.service.CreateClient(r.Context(), newClientData, req.Country, req.City, req.Street)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeInternalError(w, r, h.logger, err)
 		return
 	}
 	resp := dto.ClientResponse{
@@ -104,10 +107,10 @@ func (h *ClientHandler) DeleteClientByID(w http.ResponseWriter, r *http.Request)
 	}
 	if err := h.service.DeleteClientByID(r.Context(), id); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			http.Error(w, err.Error(), http.StatusNotFound)
+			http.Error(w, "client not found", http.StatusNotFound)
 			return
 		}
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeInternalError(w, r, h.logger, err)
 		return
 	}
 	setCacheControl(w, "no-store")
@@ -155,7 +158,7 @@ func (h *ClientHandler) GetClients(w http.ResponseWriter, r *http.Request) {
 		clients, err = h.service.GetAllClients(r.Context(), limit, offset)
 	}
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeInternalError(w, r, h.logger, err)
 		return
 	}
 	resp := mapper.ClientsWithAddressesToDTO(clients)
@@ -195,10 +198,10 @@ func (h *ClientHandler) UpdateClientAddress(w http.ResponseWriter, r *http.Reque
 	}
 	if err := h.service.UpdateClientAddress(r.Context(), id, req.Country, req.City, req.Street); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			http.Error(w, err.Error(), http.StatusNotFound)
+			http.Error(w, "client not found", http.StatusNotFound)
 			return
 		}
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeInternalError(w, r, h.logger, err)
 		return
 	}
 	setCacheControl(w, "no-store")

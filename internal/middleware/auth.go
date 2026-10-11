@@ -1,0 +1,38 @@
+package middleware
+
+import (
+	"context"
+	"log/slog"
+	"net/http"
+	"strings"
+)
+
+type userIDKey struct{}
+
+type TokenValidator interface {
+	ValidateToken(ctx context.Context, token string) (valid bool, userID string, err error)
+}
+
+func Auth(validator TokenValidator, logger *slog.Logger) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			token, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer ")
+			if !ok || token == "" {
+				http.Error(w, "missing or invalid Authorization header", http.StatusUnauthorized)
+				return
+			}
+			valid, userID, err := validator.ValidateToken(r.Context(), token)
+			if err != nil {
+				logger.Error("token validation error", "err", err)
+				http.Error(w, "failed to validate token", http.StatusServiceUnavailable)
+				return
+			}
+			if !valid {
+				http.Error(w, "invalid token or expired token", http.StatusUnauthorized)
+				return
+			}
+			ctx := context.WithValue(r.Context(), userIDKey{}, userID)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+}
