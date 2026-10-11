@@ -9,6 +9,16 @@ definitions:
       street:
         type: string
     type: object
+  dto.AuthRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
   dto.ClientResponse:
     properties:
       address:
@@ -118,6 +128,38 @@ definitions:
       supplier_id:
         type: string
     type: object
+  dto.RegisterRequest:
+    properties:
+      email:
+        type: string
+      name:
+        maxLength: 100
+        minLength: 1
+        type: string
+      password:
+        maxLength: 40
+        minLength: 8
+        type: string
+      phone_number:
+        type: string
+      surname:
+        maxLength: 100
+        minLength: 1
+        type: string
+    required:
+    - email
+    - name
+    - password
+    - phone_number
+    - surname
+    type: object
+  dto.ResetPasswordRequest:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
   dto.SupplierRequest:
     properties:
       city:
@@ -160,6 +202,11 @@ definitions:
       phone_number:
         type: string
     type: object
+  dto.TokenResponse:
+    properties:
+      token:
+        type: string
+    type: object
   dto.UpdateAddressRequest:
     properties:
       city:
@@ -179,7 +226,6 @@ definitions:
     - country
     - street
     type: object
-host: localhost:8080
 info:
   contact: {}
   description: 'REST API for a home-appliance store: clients, products, suppliers,
@@ -187,6 +233,49 @@ info:
   title: ShopAPI
   version: "1.0"
 paths:
+  /auth:
+    post:
+      consumes:
+      - application/json
+      description: Checks the email and password in the auth service and returns a
+        signed JWT token. Does not require authentication.
+      parameters:
+      - description: Login data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AuthRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.TokenResponse'
+        "400":
+          description: invalid request body or validation error
+          schema:
+            type: string
+        "401":
+          description: invalid credentials
+          schema:
+            type: string
+        "500":
+          description: internal server error
+          schema:
+            type: string
+        "503":
+          description: authentication service unavailable
+          schema:
+            type: string
+        "504":
+          description: authentication service timed out
+          schema:
+            type: string
+      summary: Authenticate a user
+      tags:
+      - auth
   /clients:
     get:
       description: Returns clients filtered by name and surname, or a paginated list
@@ -221,10 +310,20 @@ paths:
           description: invalid limit or offset value
           schema:
             type: string
+        "401":
+          description: missing or invalid token
+          schema:
+            type: string
         "500":
           description: internal server error
           schema:
             type: string
+        "503":
+          description: authentication service unavailable
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
       summary: Get clients
       tags:
       - clients
@@ -247,10 +346,24 @@ paths:
           description: Created
           schema:
             $ref: '#/definitions/dto.ClientResponse'
+        "400":
+          description: invalid request body or validation error
+          schema:
+            type: string
+        "401":
+          description: missing or invalid token
+          schema:
+            type: string
         "500":
           description: internal server error
           schema:
             type: string
+        "503":
+          description: authentication service unavailable
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
       summary: Create a new client
       tags:
       - clients
@@ -267,17 +380,27 @@ paths:
         "204":
           description: Client deleted successfully
         "400":
-          description: Invalid id format
+          description: invalid id format
+          schema:
+            type: string
+        "401":
+          description: missing or invalid token
           schema:
             type: string
         "404":
-          description: Client not found
+          description: client not found
           schema:
             type: string
         "500":
-          description: Internal server error
+          description: internal server error
           schema:
             type: string
+        "503":
+          description: authentication service unavailable
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
       summary: Delete an existing client
       tags:
       - clients
@@ -305,6 +428,10 @@ paths:
           description: invalid request body, id format, or validation error
           schema:
             type: string
+        "401":
+          description: missing or invalid token
+          schema:
+            type: string
         "404":
           description: client not found
           schema:
@@ -313,6 +440,12 @@ paths:
           description: internal server error
           schema:
             type: string
+        "503":
+          description: authentication service unavailable
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
       summary: Update a client's address
       tags:
       - clients
@@ -333,6 +466,10 @@ paths:
           description: invalid id format
           schema:
             type: string
+        "401":
+          description: missing or invalid token
+          schema:
+            type: string
         "404":
           description: image not found
           schema:
@@ -341,6 +478,12 @@ paths:
           description: internal server error
           schema:
             type: string
+        "503":
+          description: authentication service unavailable
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
       summary: Delete an image by ID
       tags:
       - images
@@ -363,6 +506,10 @@ paths:
           description: invalid id format
           schema:
             type: string
+        "401":
+          description: missing or invalid token
+          schema:
+            type: string
         "404":
           description: image not found
           schema:
@@ -371,6 +518,12 @@ paths:
           description: internal server error
           schema:
             type: string
+        "503":
+          description: authentication service unavailable
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
       summary: Get an image by ID
       tags:
       - images
@@ -391,6 +544,10 @@ paths:
           description: invalid id format or failed to read request body
           schema:
             type: string
+        "401":
+          description: missing or invalid token
+          schema:
+            type: string
         "404":
           description: image not found
           schema:
@@ -399,6 +556,12 @@ paths:
           description: internal server error
           schema:
             type: string
+        "503":
+          description: authentication service unavailable
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
       summary: Replace an existing image
       tags:
       - images
@@ -428,10 +591,20 @@ paths:
           description: invalid limit or offset value
           schema:
             type: string
+        "401":
+          description: missing or invalid token
+          schema:
+            type: string
         "500":
           description: internal server error
           schema:
             type: string
+        "503":
+          description: authentication service unavailable
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
       summary: Get all available products
       tags:
       - products
@@ -458,10 +631,20 @@ paths:
           description: invalid request body or validation error
           schema:
             type: string
+        "401":
+          description: missing or invalid token
+          schema:
+            type: string
         "500":
           description: internal server error
           schema:
             type: string
+        "503":
+          description: authentication service unavailable
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
       summary: Create a new product
       tags:
       - products
@@ -481,6 +664,10 @@ paths:
           description: invalid id format
           schema:
             type: string
+        "401":
+          description: missing or invalid token
+          schema:
+            type: string
         "404":
           description: product not found
           schema:
@@ -489,6 +676,12 @@ paths:
           description: internal server error
           schema:
             type: string
+        "503":
+          description: authentication service unavailable
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
       summary: Delete a product by ID
       tags:
       - products
@@ -511,6 +704,10 @@ paths:
           description: invalid id format
           schema:
             type: string
+        "401":
+          description: missing or invalid token
+          schema:
+            type: string
         "404":
           description: product not found
           schema:
@@ -519,6 +716,12 @@ paths:
           description: internal server error
           schema:
             type: string
+        "503":
+          description: authentication service unavailable
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
       summary: Get a product by ID
       tags:
       - products
@@ -542,6 +745,10 @@ paths:
           description: invalid id format
           schema:
             type: string
+        "401":
+          description: missing or invalid token
+          schema:
+            type: string
         "404":
           description: product not found or has no image
           schema:
@@ -550,6 +757,12 @@ paths:
           description: internal server error
           schema:
             type: string
+        "503":
+          description: authentication service unavailable
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
       summary: Get a product's image
       tags:
       - images
@@ -571,6 +784,10 @@ paths:
           description: invalid id format or failed to read request body
           schema:
             type: string
+        "401":
+          description: missing or invalid token
+          schema:
+            type: string
         "404":
           description: product not found
           schema:
@@ -579,6 +796,12 @@ paths:
           description: internal server error
           schema:
             type: string
+        "503":
+          description: authentication service unavailable
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
       summary: Add an image to a product
       tags:
       - images
@@ -607,6 +830,10 @@ paths:
           description: invalid request body, id format, or non-positive amount
           schema:
             type: string
+        "401":
+          description: missing or invalid token
+          schema:
+            type: string
         "404":
           description: product not found or insufficient stock
           schema:
@@ -615,9 +842,90 @@ paths:
           description: internal server error
           schema:
             type: string
+        "503":
+          description: authentication service unavailable
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
       summary: Decrease a product's available stock
       tags:
       - products
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new user in the auth service and returns a signed JWT
+        token. Does not require authentication.
+      parameters:
+      - description: Registration data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.TokenResponse'
+        "400":
+          description: invalid request body or validation error
+          schema:
+            type: string
+        "500":
+          description: internal server error
+          schema:
+            type: string
+        "503":
+          description: authentication service unavailable
+          schema:
+            type: string
+        "504":
+          description: authentication service timed out
+          schema:
+            type: string
+      summary: Register a new user
+      tags:
+      - auth
+  /reset:
+    post:
+      consumes:
+      - application/json
+      description: Asks the auth service to generate a new password and send it to
+        the user. The response is the same whether or not the email exists. Does not
+        require authentication.
+      parameters:
+      - description: Email of the user
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ResetPasswordRequest'
+      responses:
+        "204":
+          description: Reset requested
+        "400":
+          description: invalid request body or validation error
+          schema:
+            type: string
+        "500":
+          description: internal server error
+          schema:
+            type: string
+        "503":
+          description: authentication service unavailable
+          schema:
+            type: string
+        "504":
+          description: authentication service timed out
+          schema:
+            type: string
+      summary: Request a password reset
+      tags:
+      - auth
   /suppliers:
     get:
       description: Returns a paginated list of all suppliers
@@ -643,10 +951,20 @@ paths:
           description: invalid limit or offset value
           schema:
             type: string
+        "401":
+          description: missing or invalid token
+          schema:
+            type: string
         "500":
           description: internal server error
           schema:
             type: string
+        "503":
+          description: authentication service unavailable
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
       summary: Get all suppliers
       tags:
       - suppliers
@@ -673,10 +991,20 @@ paths:
           description: invalid request body or validation error
           schema:
             type: string
+        "401":
+          description: missing or invalid token
+          schema:
+            type: string
         "500":
           description: internal server error
           schema:
             type: string
+        "503":
+          description: authentication service unavailable
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
       summary: Create a new supplier
       tags:
       - suppliers
@@ -696,6 +1024,10 @@ paths:
           description: invalid id format
           schema:
             type: string
+        "401":
+          description: missing or invalid token
+          schema:
+            type: string
         "404":
           description: supplier not found
           schema:
@@ -704,6 +1036,12 @@ paths:
           description: internal server error
           schema:
             type: string
+        "503":
+          description: authentication service unavailable
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
       summary: Delete a supplier by ID
       tags:
       - suppliers
@@ -726,6 +1064,10 @@ paths:
           description: invalid id format
           schema:
             type: string
+        "401":
+          description: missing or invalid token
+          schema:
+            type: string
         "404":
           description: supplier not found
           schema:
@@ -734,6 +1076,12 @@ paths:
           description: internal server error
           schema:
             type: string
+        "503":
+          description: authentication service unavailable
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
       summary: Get a supplier by ID
       tags:
       - suppliers
@@ -761,6 +1109,10 @@ paths:
           description: invalid request body, id format, or validation error
           schema:
             type: string
+        "401":
+          description: missing or invalid token
+          schema:
+            type: string
         "404":
           description: supplier not found
           schema:
@@ -769,7 +1121,19 @@ paths:
           description: internal server error
           schema:
             type: string
+        "503":
+          description: authentication service unavailable
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
       summary: Update a supplier's address
       tags:
       - suppliers
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and the JWT token
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

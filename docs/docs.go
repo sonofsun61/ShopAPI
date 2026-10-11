@@ -15,8 +15,77 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/auth": {
+            "post": {
+                "description": "Checks the email and password in the auth service and returns a signed JWT token. Does not require authentication.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Authenticate a user",
+                "parameters": [
+                    {
+                        "description": "Login data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.AuthRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.TokenResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid request body or validation error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "invalid credentials",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "503": {
+                        "description": "authentication service unavailable",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "504": {
+                        "description": "authentication service timed out",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/clients": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Returns clients filtered by name and surname, or a paginated list of all clients if no filter is given",
                 "produces": [
                     "application/json"
@@ -67,8 +136,20 @@ const docTemplate = `{
                             "type": "string"
                         }
                     },
+                    "401": {
+                        "description": "missing or invalid token",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     "500": {
                         "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "503": {
+                        "description": "authentication service unavailable",
                         "schema": {
                             "type": "string"
                         }
@@ -76,6 +157,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Creates a new client along with a new address record, in a single transaction.",
                 "consumes": [
                     "application/json"
@@ -105,8 +191,26 @@ const docTemplate = `{
                             "$ref": "#/definitions/dto.ClientResponse"
                         }
                     },
+                    "400": {
+                        "description": "invalid request body or validation error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "missing or invalid token",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     "500": {
                         "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "503": {
+                        "description": "authentication service unavailable",
                         "schema": {
                             "type": "string"
                         }
@@ -116,6 +220,11 @@ const docTemplate = `{
         },
         "/clients/{id}": {
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Deletes an existing client without deleting his address",
                 "tags": [
                     "clients"
@@ -135,19 +244,31 @@ const docTemplate = `{
                         "description": "Client deleted successfully"
                     },
                     "400": {
-                        "description": "Invalid id format",
+                        "description": "invalid id format",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "missing or invalid token",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "404": {
-                        "description": "Client not found",
+                        "description": "client not found",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "503": {
+                        "description": "authentication service unavailable",
                         "schema": {
                             "type": "string"
                         }
@@ -155,6 +276,11 @@ const docTemplate = `{
                 }
             },
             "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Creates a new address record and links it to the client, in a single transaction",
                 "consumes": [
                     "application/json"
@@ -191,6 +317,12 @@ const docTemplate = `{
                             "type": "string"
                         }
                     },
+                    "401": {
+                        "description": "missing or invalid token",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     "404": {
                         "description": "client not found",
                         "schema": {
@@ -202,12 +334,23 @@ const docTemplate = `{
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    "503": {
+                        "description": "authentication service unavailable",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 }
             }
         },
         "/images/{id}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Returns the raw image bytes by the image's unique identifier",
                 "produces": [
                     "application/octet-stream"
@@ -238,6 +381,12 @@ const docTemplate = `{
                             "type": "string"
                         }
                     },
+                    "401": {
+                        "description": "missing or invalid token",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     "404": {
                         "description": "image not found",
                         "schema": {
@@ -249,10 +398,21 @@ const docTemplate = `{
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    "503": {
+                        "description": "authentication service unavailable",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Deletes an image by its unique identifier; the owning product's image_id is set to null",
                 "tags": [
                     "images"
@@ -277,6 +437,12 @@ const docTemplate = `{
                             "type": "string"
                         }
                     },
+                    "401": {
+                        "description": "missing or invalid token",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     "404": {
                         "description": "image not found",
                         "schema": {
@@ -288,10 +454,21 @@ const docTemplate = `{
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    "503": {
+                        "description": "authentication service unavailable",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 }
             },
             "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Replaces the bytes of an existing image by its ID",
                 "consumes": [
                     "application/octet-stream"
@@ -319,6 +496,12 @@ const docTemplate = `{
                             "type": "string"
                         }
                     },
+                    "401": {
+                        "description": "missing or invalid token",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     "404": {
                         "description": "image not found",
                         "schema": {
@@ -330,12 +513,23 @@ const docTemplate = `{
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    "503": {
+                        "description": "authentication service unavailable",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 }
             }
         },
         "/products": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Returns a paginated list of products with available_stock greater than zero",
                 "produces": [
                     "application/json"
@@ -374,8 +568,20 @@ const docTemplate = `{
                             "type": "string"
                         }
                     },
+                    "401": {
+                        "description": "missing or invalid token",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     "500": {
                         "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "503": {
+                        "description": "authentication service unavailable",
                         "schema": {
                             "type": "string"
                         }
@@ -383,6 +589,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Creates a new product; finds or creates the category by name, in a single transaction",
                 "consumes": [
                     "application/json"
@@ -418,8 +629,20 @@ const docTemplate = `{
                             "type": "string"
                         }
                     },
+                    "401": {
+                        "description": "missing or invalid token",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     "500": {
                         "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "503": {
+                        "description": "authentication service unavailable",
                         "schema": {
                             "type": "string"
                         }
@@ -429,6 +652,11 @@ const docTemplate = `{
         },
         "/products/{id}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Returns a single product by its unique identifier",
                 "produces": [
                     "application/json"
@@ -459,6 +687,12 @@ const docTemplate = `{
                             "type": "string"
                         }
                     },
+                    "401": {
+                        "description": "missing or invalid token",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     "404": {
                         "description": "product not found",
                         "schema": {
@@ -470,10 +704,21 @@ const docTemplate = `{
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    "503": {
+                        "description": "authentication service unavailable",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Deletes a product by its unique identifier",
                 "tags": [
                     "products"
@@ -498,6 +743,12 @@ const docTemplate = `{
                             "type": "string"
                         }
                     },
+                    "401": {
+                        "description": "missing or invalid token",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     "404": {
                         "description": "product not found",
                         "schema": {
@@ -509,12 +760,23 @@ const docTemplate = `{
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    "503": {
+                        "description": "authentication service unavailable",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 }
             }
         },
         "/products/{id}/image": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Returns the raw image bytes linked to the given product",
                 "produces": [
                     "application/octet-stream"
@@ -545,6 +807,12 @@ const docTemplate = `{
                             "type": "string"
                         }
                     },
+                    "401": {
+                        "description": "missing or invalid token",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     "404": {
                         "description": "product not found or has no image",
                         "schema": {
@@ -556,10 +824,21 @@ const docTemplate = `{
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    "503": {
+                        "description": "authentication service unavailable",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Uploads raw image bytes and links them to the given product, in a single transaction",
                 "consumes": [
                     "application/octet-stream"
@@ -587,6 +866,12 @@ const docTemplate = `{
                             "type": "string"
                         }
                     },
+                    "401": {
+                        "description": "missing or invalid token",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     "404": {
                         "description": "product not found",
                         "schema": {
@@ -598,12 +883,23 @@ const docTemplate = `{
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    "503": {
+                        "description": "authentication service unavailable",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 }
             }
         },
         "/products/{id}/stock": {
             "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Atomically decreases available_stock by the given amount, failing if not enough stock is available",
                 "consumes": [
                     "application/json"
@@ -640,6 +936,12 @@ const docTemplate = `{
                             "type": "string"
                         }
                     },
+                    "401": {
+                        "description": "missing or invalid token",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     "404": {
                         "description": "product not found or insufficient stock",
                         "schema": {
@@ -651,12 +953,133 @@ const docTemplate = `{
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    "503": {
+                        "description": "authentication service unavailable",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/register": {
+            "post": {
+                "description": "Creates a new user in the auth service and returns a signed JWT token. Does not require authentication.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Register a new user",
+                "parameters": [
+                    {
+                        "description": "Registration data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.RegisterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/dto.TokenResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid request body or validation error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "503": {
+                        "description": "authentication service unavailable",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "504": {
+                        "description": "authentication service timed out",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/reset": {
+            "post": {
+                "description": "Asks the auth service to generate a new password and send it to the user. The response is the same whether or not the email exists. Does not require authentication.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Request a password reset",
+                "parameters": [
+                    {
+                        "description": "Email of the user",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.ResetPasswordRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Reset requested"
+                    },
+                    "400": {
+                        "description": "invalid request body or validation error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "503": {
+                        "description": "authentication service unavailable",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "504": {
+                        "description": "authentication service timed out",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 }
             }
         },
         "/suppliers": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Returns a paginated list of all suppliers",
                 "produces": [
                     "application/json"
@@ -695,8 +1118,20 @@ const docTemplate = `{
                             "type": "string"
                         }
                     },
+                    "401": {
+                        "description": "missing or invalid token",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     "500": {
                         "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "503": {
+                        "description": "authentication service unavailable",
                         "schema": {
                             "type": "string"
                         }
@@ -704,6 +1139,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Creates a new supplier along with a new address record, in a single transaction",
                 "consumes": [
                     "application/json"
@@ -739,8 +1179,20 @@ const docTemplate = `{
                             "type": "string"
                         }
                     },
+                    "401": {
+                        "description": "missing or invalid token",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     "500": {
                         "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "503": {
+                        "description": "authentication service unavailable",
                         "schema": {
                             "type": "string"
                         }
@@ -750,6 +1202,11 @@ const docTemplate = `{
         },
         "/suppliers/{id}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Returns a single supplier by their unique identifier",
                 "produces": [
                     "application/json"
@@ -780,6 +1237,12 @@ const docTemplate = `{
                             "type": "string"
                         }
                     },
+                    "401": {
+                        "description": "missing or invalid token",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     "404": {
                         "description": "supplier not found",
                         "schema": {
@@ -791,10 +1254,21 @@ const docTemplate = `{
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    "503": {
+                        "description": "authentication service unavailable",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Deletes a supplier by their unique identifier",
                 "tags": [
                     "suppliers"
@@ -819,6 +1293,12 @@ const docTemplate = `{
                             "type": "string"
                         }
                     },
+                    "401": {
+                        "description": "missing or invalid token",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     "404": {
                         "description": "supplier not found",
                         "schema": {
@@ -830,10 +1310,21 @@ const docTemplate = `{
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    "503": {
+                        "description": "authentication service unavailable",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 }
             },
             "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Creates a new address record and links it to the supplier, in a single transaction",
                 "consumes": [
                     "application/json"
@@ -870,6 +1361,12 @@ const docTemplate = `{
                             "type": "string"
                         }
                     },
+                    "401": {
+                        "description": "missing or invalid token",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     "404": {
                         "description": "supplier not found",
                         "schema": {
@@ -878,6 +1375,12 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "503": {
+                        "description": "authentication service unavailable",
                         "schema": {
                             "type": "string"
                         }
@@ -897,6 +1400,21 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "street": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.AuthRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
                     "type": "string"
                 }
             }
@@ -1056,6 +1574,50 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.RegisterRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "name",
+                "password",
+                "phone_number",
+                "surname"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 1
+                },
+                "password": {
+                    "type": "string",
+                    "maxLength": 40,
+                    "minLength": 8
+                },
+                "phone_number": {
+                    "type": "string"
+                },
+                "surname": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 1
+                }
+            }
+        },
+        "dto.ResetPasswordRequest": {
+            "type": "object",
+            "required": [
+                "email"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.SupplierRequest": {
             "type": "object",
             "required": [
@@ -1114,6 +1676,14 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.TokenResponse": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.UpdateAddressRequest": {
             "type": "object",
             "required": [
@@ -1139,13 +1709,21 @@ const docTemplate = `{
                 }
             }
         }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "Type \"Bearer\" followed by a space and the JWT token",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
     }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:8080",
+	Host:             "",
 	BasePath:         "/api/v1",
 	Schemes:          []string{},
 	Title:            "ShopAPI",
