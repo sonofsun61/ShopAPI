@@ -44,12 +44,15 @@ func NewProductHandler(service ProductService, validate *validator.Validate, log
 // @Summary Create a new product
 // @Description Creates a new product; finds or creates the category by name, in a single transaction
 // @Tags products
+// @Security BearerAuth
 // @Accept json
 // @Produce json
 // @Param request body dto.CreateProductRequest true "Product data"
 // @Success 201 {object} dto.ProductResponse
 // @Failure 400 {string} string "invalid request body or validation error"
+// @Failure 401 {string} string "missing or invalid token"
 // @Failure 500 {string} string "internal server error"
+// @Failure 503 {string} string "authentication service unavailable"
 // @Router /products [post]
 func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 	var req dto.CreateProductRequest
@@ -95,13 +98,16 @@ func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 // @Summary Decrease a product's available stock
 // @Description Atomically decreases available_stock by the given amount, failing if not enough stock is available
 // @Tags products
+// @Security BearerAuth
 // @Accept json
 // @Param id path string true "Product ID"
 // @Param request body dto.DecreaseAvailableStockRequest true "Amount to decrease"
 // @Success 204 "Stock decreased successfully"
 // @Failure 400 {string} string "invalid request body, id format, or non-positive amount"
+// @Failure 401 {string} string "missing or invalid token"
 // @Failure 404 {string} string "product not found or insufficient stock"
 // @Failure 500 {string} string "internal server error"
+// @Failure 503 {string} string "authentication service unavailable"
 // @Router /products/{id}/stock [patch]
 func (h *ProductHandler) DecreaseStock(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
@@ -140,12 +146,15 @@ func (h *ProductHandler) DecreaseStock(w http.ResponseWriter, r *http.Request) {
 // @Summary Get a product by ID
 // @Description Returns a single product by its unique identifier
 // @Tags products
+// @Security BearerAuth
 // @Produce json
 // @Param id path string true "Product ID"
 // @Success 200 {object} dto.ProductResponse
 // @Failure 400 {string} string "invalid id format"
+// @Failure 401 {string} string "missing or invalid token"
 // @Failure 404 {string} string "product not found"
 // @Failure 500 {string} string "internal server error"
+// @Failure 503 {string} string "authentication service unavailable"
 // @Router /products/{id} [get]
 func (h *ProductHandler) GetProductByID(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
@@ -174,12 +183,15 @@ func (h *ProductHandler) GetProductByID(w http.ResponseWriter, r *http.Request) 
 // @Summary Get all available products
 // @Description Returns a paginated list of products with available_stock greater than zero
 // @Tags products
+// @Security BearerAuth
 // @Produce json
 // @Param limit query int false "Pagination limit"
 // @Param offset query int false "Pagination offset"
 // @Success 200 {array} dto.ProductResponse
 // @Failure 400 {string} string "invalid limit or offset value"
+// @Failure 401 {string} string "missing or invalid token"
 // @Failure 500 {string} string "internal server error"
+// @Failure 503 {string} string "authentication service unavailable"
 // @Router /products [get]
 func (h *ProductHandler) GetAllProducts(w http.ResponseWriter, r *http.Request) {
 	var limit, offset *int
@@ -215,11 +227,14 @@ func (h *ProductHandler) GetAllProducts(w http.ResponseWriter, r *http.Request) 
 // @Summary Delete a product by ID
 // @Description Deletes a product by its unique identifier
 // @Tags products
+// @Security BearerAuth
 // @Param id path string true "Product ID"
 // @Success 204 "Product deleted successfully"
 // @Failure 400 {string} string "invalid id format"
+// @Failure 401 {string} string "missing or invalid token"
 // @Failure 404 {string} string "product not found"
 // @Failure 500 {string} string "internal server error"
+// @Failure 503 {string} string "authentication service unavailable"
 // @Router /products/{id} [delete]
 func (h *ProductHandler) DeleteProductByID(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")

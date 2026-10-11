@@ -43,12 +43,15 @@ func NewSupplierHandler(service SupplierService, validate *validator.Validate, l
 // @Summary Create a new supplier
 // @Description Creates a new supplier along with a new address record, in a single transaction
 // @Tags suppliers
+// @Security BearerAuth
 // @Accept json
 // @Produce json
 // @Param request body dto.SupplierRequest true "Supplier data"
 // @Success 201 {object} dto.SupplierResponse
 // @Failure 400 {string} string "invalid request body or validation error"
+// @Failure 401 {string} string "missing or invalid token"
 // @Failure 500 {string} string "internal server error"
+// @Failure 503 {string} string "authentication service unavailable"
 // @Router /suppliers [post]
 func (h *SupplierHandler) AddSupplier(w http.ResponseWriter, r *http.Request) {
 	var req dto.SupplierRequest
@@ -89,13 +92,16 @@ func (h *SupplierHandler) AddSupplier(w http.ResponseWriter, r *http.Request) {
 // @Summary Update a supplier's address
 // @Description Creates a new address record and links it to the supplier, in a single transaction
 // @Tags suppliers
+// @Security BearerAuth
 // @Accept json
 // @Param id path string true "Supplier ID"
 // @Param request body dto.UpdateAddressRequest true "New address data"
 // @Success 204 "Address updated successfully"
 // @Failure 400 {string} string "invalid request body, id format, or validation error"
+// @Failure 401 {string} string "missing or invalid token"
 // @Failure 404 {string} string "supplier not found"
 // @Failure 500 {string} string "internal server error"
+// @Failure 503 {string} string "authentication service unavailable"
 // @Router /suppliers/{id} [patch]
 func (h *SupplierHandler) UpdateSupplierAddress(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
@@ -129,11 +135,14 @@ func (h *SupplierHandler) UpdateSupplierAddress(w http.ResponseWriter, r *http.R
 // @Summary Delete a supplier by ID
 // @Description Deletes a supplier by their unique identifier
 // @Tags suppliers
+// @Security BearerAuth
 // @Param id path string true "Supplier ID"
 // @Success 204 "Supplier deleted successfully"
 // @Failure 400 {string} string "invalid id format"
+// @Failure 401 {string} string "missing or invalid token"
 // @Failure 404 {string} string "supplier not found"
 // @Failure 500 {string} string "internal server error"
+// @Failure 503 {string} string "authentication service unavailable"
 // @Router /suppliers/{id} [delete]
 func (h *SupplierHandler) DeleteSupplier(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
@@ -158,12 +167,15 @@ func (h *SupplierHandler) DeleteSupplier(w http.ResponseWriter, r *http.Request)
 // @Summary Get all suppliers
 // @Description Returns a paginated list of all suppliers
 // @Tags suppliers
+// @Security BearerAuth
 // @Produce json
 // @Param limit query int false "Pagination limit"
 // @Param offset query int false "Pagination offset"
 // @Success 200 {array} dto.SupplierResponse
 // @Failure 400 {string} string "invalid limit or offset value"
+// @Failure 401 {string} string "missing or invalid token"
 // @Failure 500 {string} string "internal server error"
+// @Failure 503 {string} string "authentication service unavailable"
 // @Router /suppliers [get]
 func (h *SupplierHandler) GetSuppliers(w http.ResponseWriter, r *http.Request) {
 	var limit, offset *int
@@ -199,12 +211,15 @@ func (h *SupplierHandler) GetSuppliers(w http.ResponseWriter, r *http.Request) {
 // @Summary Get a supplier by ID
 // @Description Returns a single supplier by their unique identifier
 // @Tags suppliers
+// @Security BearerAuth
 // @Produce json
 // @Param id path string true "Supplier ID"
 // @Success 200 {object} dto.SupplierResponse
 // @Failure 400 {string} string "invalid id format"
+// @Failure 401 {string} string "missing or invalid token"
 // @Failure 404 {string} string "supplier not found"
 // @Failure 500 {string} string "internal server error"
+// @Failure 503 {string} string "authentication service unavailable"
 // @Router /suppliers/{id} [get]
 func (h *SupplierHandler) GetSupplierByID(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")

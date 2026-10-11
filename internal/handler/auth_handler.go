@@ -32,6 +32,19 @@ func NewAuthHandler(service AuthService, validate *validator.Validate, logger *s
 	}
 }
 
+// Register godoc
+// @Summary Register a new user
+// @Description Creates a new user in the auth service and returns a signed JWT token. Does not require authentication.
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body dto.RegisterRequest true "Registration data"
+// @Success 201 {object} dto.TokenResponse
+// @Failure 400 {string} string "invalid request body or validation error"
+// @Failure 500 {string} string "internal server error"
+// @Failure 503 {string} string "authentication service unavailable"
+// @Failure 504 {string} string "authentication service timed out"
+// @Router /register [post]
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req dto.RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -53,6 +66,20 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(dto.TokenResponse{Token: token})
 }
 
+// Login godoc
+// @Summary Authenticate a user
+// @Description Checks the email and password in the auth service and returns a signed JWT token. Does not require authentication.
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body dto.AuthRequest true "Login data"
+// @Success 200 {object} dto.TokenResponse
+// @Failure 400 {string} string "invalid request body or validation error"
+// @Failure 401 {string} string "invalid credentials"
+// @Failure 500 {string} string "internal server error"
+// @Failure 503 {string} string "authentication service unavailable"
+// @Failure 504 {string} string "authentication service timed out"
+// @Router /auth [post]
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req dto.AuthRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -74,6 +101,18 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(dto.TokenResponse{Token: token})
 }
 
+// ResetPassword godoc
+// @Summary Request a password reset
+// @Description Asks the auth service to generate a new password and send it to the user. The response is the same whether or not the email exists. Does not require authentication.
+// @Tags auth
+// @Accept json
+// @Param request body dto.ResetPasswordRequest true "Email of the user"
+// @Success 204 "Reset requested"
+// @Failure 400 {string} string "invalid request body or validation error"
+// @Failure 500 {string} string "internal server error"
+// @Failure 503 {string} string "authentication service unavailable"
+// @Failure 504 {string} string "authentication service timed out"
+// @Router /reset [post]
 func (h *AuthHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	var req dto.ResetPasswordRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
