@@ -93,7 +93,7 @@ func (r *PostgresImageRepository) GetImageByImageID(ctx context.Context, imageID
 	query := `Select image from images where id = $1`
 	var imageBytes []byte
 	if err := r.pool.QueryRow(ctx, query, imageID).Scan(&imageBytes); err != nil {
-		return entity.Image{}, fmt.Errorf("failed to get image: %v", err)
+		return entity.Image{}, fmt.Errorf("failed to get image: %w", err)
 	}
 	return entity.Image{
 		ID:    imageID,

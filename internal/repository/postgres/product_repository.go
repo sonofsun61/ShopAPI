@@ -95,7 +95,7 @@ func (r *PostgresProductRepository) GetProductByID(ctx context.Context, productI
 	}
 	product, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[entity.Product])
 	if err != nil {
-		return entity.Product{}, fmt.Errorf("failed to place row in struct: %v", err)
+		return entity.Product{}, fmt.Errorf("failed to place row in struct: %w", err)
 	}
 	return product, nil
 }
