@@ -17,3 +17,13 @@ inversion via interfaces, database transactions, and RESTful API design.
 
 ## Tech stack
 Go · chi · pgx/v5 (pgxpool) · PostgreSQL · golang-migrate · Docker Compose · go-playground/validator
+
+## Tests
+Written with [testify](https://github.com/stretchr/testify) (`assert`, `require`, `mock`):
+- unit tests for handlers (`httptest`), middleware, mappers and services, with mocked dependencies;
+- gRPC auth client tests against an in-memory server (`bufconn`);
+- integration tests for the PostgreSQL repositories using [testcontainers-go](https://golang.testcontainers.org/) (requires Docker).
+
+```bash
+go test -race -cover ./...
+```
