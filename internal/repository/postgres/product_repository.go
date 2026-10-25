@@ -53,7 +53,7 @@ func (r *PostgresProductRepository) CreateProduct(ctx context.Context, newProduc
 		newProductData.AvailableStock,
 		newProductData.SupplierID)
 	if err != nil {
-    	return entity.Product{}, fmt.Errorf("failed to query product: %v", err)
+		return entity.Product{}, fmt.Errorf("failed to query product: %v", err)
 	}
 	product, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[entity.Product])
 	if err != nil {
@@ -65,7 +65,7 @@ func (r *PostgresProductRepository) CreateProduct(ctx context.Context, newProduc
 	return product, nil
 }
 
-func (r *PostgresProductRepository) DecreaseStock(ctx context.Context, productID uuid.UUID, amount int) (error) {
+func (r *PostgresProductRepository) DecreaseStock(ctx context.Context, productID uuid.UUID, amount int) error {
 	query := `
 			UPDATE product
 			SET available_stock = available_stock - $1
@@ -126,7 +126,7 @@ func (r *PostgresProductRepository) GetAllProducts(ctx context.Context, limit *i
 	return products, nil
 }
 
-func (r *PostgresProductRepository) DeleteProductByID(ctx context.Context, productID uuid.UUID) (error) {
+func (r *PostgresProductRepository) DeleteProductByID(ctx context.Context, productID uuid.UUID) error {
 	tag, err := r.pool.Exec(ctx, `DELETE FROM product WHERE id = $1`, productID)
 	if err != nil {
 		return fmt.Errorf("could not delete supplier: %v", err)

@@ -8,30 +8,30 @@ import (
 
 func SupplierWithAddressToDTO(supplier entity.SupplierWithAddress) dto.SupplierResponse {
 	address := dto.AddressResponse{
-			Country: supplier.Country,
-			City: supplier.City,
-			Street: supplier.Street,
-		}
+		Country: supplier.Country,
+		City:    supplier.City,
+		Street:  supplier.Street,
+	}
 	links := map[string]dto.Link{
 		"self": {
-			Href: routes.SuppliersBasePath + "/" + supplier.ID.String(),
+			Href:   routes.SuppliersBasePath + "/" + supplier.ID.String(),
 			Method: "GET",
 		},
 		"update_address": {
-			Href: routes.SuppliersBasePath + "/" + supplier.ID.String(),
+			Href:   routes.SuppliersBasePath + "/" + supplier.ID.String(),
 			Method: "PATCH",
 		},
 		"delete": {
-			Href: routes.SuppliersBasePath + "/" + supplier.ID.String(),
+			Href:   routes.SuppliersBasePath + "/" + supplier.ID.String(),
 			Method: "DELETE",
 		},
 	}
 	supplierData := dto.SupplierResponse{
-		ID: supplier.ID,
+		ID:           supplier.ID,
 		SupplierName: supplier.SupplierName,
-		PhoneNumber: supplier.PhoneNumber,
-		Address: address,
-		Links: links,
+		PhoneNumber:  supplier.PhoneNumber,
+		Address:      address,
+		Links:        links,
 	}
 	return supplierData
 }

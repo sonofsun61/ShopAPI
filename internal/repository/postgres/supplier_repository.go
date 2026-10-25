@@ -28,8 +28,8 @@ func (r *PostgresSupplierRepository) AddSupplier(ctx context.Context, newSupplie
 	defer tx.Rollback(ctx)
 	var newAddressID uuid.UUID
 	err = tx.QueryRow(ctx, `INSERT INTO address (country, city, street)
-							VALUES ($1, $2, $3) RETURNING id`, 
-	country, city, street).Scan(&newAddressID)
+							VALUES ($1, $2, $3) RETURNING id`,
+		country, city, street).Scan(&newAddressID)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("failed to insert new supplier address: %v", err)
 	}
@@ -39,7 +39,7 @@ func (r *PostgresSupplierRepository) AddSupplier(ctx context.Context, newSupplie
 		return uuid.Nil, fmt.Errorf("failed to insert new supplier: %v", err)
 	}
 	if err := tx.Commit(ctx); err != nil {
-    	return uuid.Nil, fmt.Errorf("could not commit transaction: %v", err)
+		return uuid.Nil, fmt.Errorf("could not commit transaction: %v", err)
 	}
 	return newSupplierID, nil
 }
@@ -52,20 +52,20 @@ func (r *PostgresSupplierRepository) UpdateSupplierAddress(ctx context.Context, 
 	defer tx.Rollback(ctx)
 	var newAddressID uuid.UUID
 	err = tx.QueryRow(ctx, `INSERT INTO address (country, city, street)
-							VALUES ($1, $2, $3) RETURNING id`, 
-	country, city, street).Scan(&newAddressID)
+							VALUES ($1, $2, $3) RETURNING id`,
+		country, city, street).Scan(&newAddressID)
 	if err != nil {
 		return fmt.Errorf("failed to insert new address: %v", err)
 	}
 	tag, err := tx.Exec(ctx, "UPDATE supplier SET address_id = $1 WHERE id = $2", newAddressID, supplierID)
 	if err != nil {
-    	return fmt.Errorf("could not update client address: %v", err)
+		return fmt.Errorf("could not update client address: %v", err)
 	}
 	if tag.RowsAffected() == 0 {
 		return pgx.ErrNoRows
 	}
 	if err := tx.Commit(ctx); err != nil {
-    	return fmt.Errorf("could not commit transaction: %v", err)
+		return fmt.Errorf("could not commit transaction: %v", err)
 	}
 	return nil
 }

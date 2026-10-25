@@ -28,14 +28,14 @@ type ClientService interface {
 type ClientHandler struct {
 	service  ClientService
 	validate *validator.Validate
-	logger *slog.Logger
+	logger   *slog.Logger
 }
 
 func NewClientHandler(service ClientService, validate *validator.Validate, logger *slog.Logger) *ClientHandler {
 	return &ClientHandler{
 		service:  service,
 		validate: validate,
-		logger: logger,
+		logger:   logger,
 	}
 }
 
@@ -64,10 +64,10 @@ func (h *ClientHandler) CreateClient(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	newClientData := entity.NewClientData{
-		ClientName: req.ClientName,
+		ClientName:    req.ClientName,
 		ClientSurname: req.ClientSurname,
-		Birthday: req.Birthday,
-		Gender: req.Gender,
+		Birthday:      req.Birthday,
+		Gender:        req.Gender,
 	}
 	newID, err := h.service.CreateClient(r.Context(), newClientData, req.Country, req.City, req.Street)
 	if err != nil {
@@ -75,15 +75,15 @@ func (h *ClientHandler) CreateClient(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	resp := dto.ClientResponse{
-		ID: newID,
-		ClientName: req.ClientName,
+		ID:            newID,
+		ClientName:    req.ClientName,
 		ClientSurname: req.ClientSurname,
-		Birthday: req.Birthday,
-		Gender: req.Gender,
+		Birthday:      req.Birthday,
+		Gender:        req.Gender,
 		Address: dto.AddressResponse{
 			Country: req.Country,
-			City: req.City,
-			Street: req.Street,
+			City:    req.City,
+			Street:  req.Street,
 		},
 	}
 	w.Header().Set("Content-Type", "application/json")

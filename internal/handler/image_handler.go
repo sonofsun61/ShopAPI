@@ -25,14 +25,14 @@ type ImageService interface {
 type ImageHandler struct {
 	service  ImageService
 	validate *validator.Validate
-	logger *slog.Logger
+	logger   *slog.Logger
 }
 
 func NewImageHandler(service ImageService, validate *validator.Validate, logger *slog.Logger) *ImageHandler {
 	return &ImageHandler{
 		service:  service,
 		validate: validate,
-		logger: logger,
+		logger:   logger,
 	}
 }
 

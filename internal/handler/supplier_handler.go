@@ -28,14 +28,14 @@ type SupplierService interface {
 type SupplierHandler struct {
 	service  SupplierService
 	validate *validator.Validate
-	logger *slog.Logger
+	logger   *slog.Logger
 }
 
 func NewSupplierHandler(service SupplierService, validate *validator.Validate, logger *slog.Logger) *SupplierHandler {
 	return &SupplierHandler{
 		service:  service,
 		validate: validate,
-		logger: logger,
+		logger:   logger,
 	}
 }
 
@@ -73,13 +73,13 @@ func (h *SupplierHandler) AddSupplier(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	resp := dto.SupplierResponse{
-		ID: newSupplierID,
+		ID:           newSupplierID,
 		SupplierName: req.SupplierName,
-		PhoneNumber: req.PhoneNumber,
+		PhoneNumber:  req.PhoneNumber,
 		Address: dto.AddressResponse{
 			Country: req.Country,
-			City: req.City,
-			Street: req.Street,
+			City:    req.City,
+			Street:  req.Street,
 		},
 	}
 	w.Header().Set("Content-Type", "application/json")

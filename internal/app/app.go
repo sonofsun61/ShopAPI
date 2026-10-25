@@ -17,25 +17,25 @@ import (
 )
 
 type App struct {
-	config *config.Config
-	pool   *pgxpool.Pool
-	router http.Handler
-	logger *slog.Logger
+	config   *config.Config
+	pool     *pgxpool.Pool
+	router   http.Handler
+	logger   *slog.Logger
 	authConn *grpc.ClientConn
 }
 
 func (a *App) Run() error {
 	defer a.pool.Close()
-	defer func()  {
+	defer func() {
 		if err := a.authConn.Close(); err != nil {
 			a.logger.Error("failed to close auth connection", "err", err)
 		}
 	}()
 	server := &http.Server{
-		Addr:    ":8080",
-		Handler: a.router,
+		Addr:              ":8080",
+		Handler:           a.router,
 		ReadHeaderTimeout: 5 * time.Second,
-		IdleTimeout: 60 * time.Second,
+		IdleTimeout:       60 * time.Second,
 	}
 
 	listener, err := net.Listen("tcp", server.Addr)

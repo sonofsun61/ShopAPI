@@ -29,14 +29,14 @@ type ProductService interface {
 type ProductHandler struct {
 	service  ProductService
 	validate *validator.Validate
-	logger *slog.Logger
+	logger   *slog.Logger
 }
 
 func NewProductHandler(service ProductService, validate *validator.Validate, logger *slog.Logger) *ProductHandler {
 	return &ProductHandler{
 		service:  service,
 		validate: validate,
-		logger: logger,
+		logger:   logger,
 	}
 }
 
