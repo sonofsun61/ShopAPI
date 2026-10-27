@@ -11,7 +11,9 @@ import (
 	"fmt"
 	"github.com/go-playground/validator/v10"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 	"github.com/sonofsun61/APIFromSpec/internal/authclient"
+	"github.com/sonofsun61/APIFromSpec/internal/cache"
 	"github.com/sonofsun61/APIFromSpec/internal/config"
 	"github.com/sonofsun61/APIFromSpec/internal/database"
 	"github.com/sonofsun61/APIFromSpec/internal/handler"
@@ -21,6 +23,7 @@ import (
 	"google.golang.org/grpc"
 	"log/slog"
 	"net/http"
+	"time"
 )
 
 // Injectors from wire.go:
@@ -40,30 +43,35 @@ func InitializeApp() *App {
 	supplierService := service.NewSupplierService(postgresSupplierRepository)
 	supplierHandler := handler.NewSupplierHandler(supplierService, validate, slogLogger)
 	postgresProductRepository := postgres.NewPostgresProductRepository(pool)
-	productService := service.NewProductService(postgresProductRepository)
+	client := ProvideRedisClient(context, configConfig, slogLogger)
+	cachedProductRepository := ProvideCachedProductRepository(postgresProductRepository, client, slogLogger)
+	productService := service.NewProductService(cachedProductRepository)
 	productHandler := handler.NewProductHandler(productService, validate, slogLogger)
 	postgresImageRepository := postgres.NewPostgresImageRepository(pool)
 	imageService := service.NewImageService(postgresImageRepository)
 	imageHandler := handler.NewImageHandler(imageService, validate, slogLogger)
 	clientConn := ProvideAuthConn(configConfig)
-	client := authclient.New(clientConn)
-	authHandler := handler.NewAuthHandler(client, validate, slogLogger)
-	httpHandler := handler.SetUpRouter(clientHandler, supplierHandler, productHandler, imageHandler, authHandler, client, slogLogger)
-	app := ProvideApp(configConfig, pool, httpHandler, slogLogger, clientConn)
+	authclientClient := authclient.New(clientConn)
+	authHandler := handler.NewAuthHandler(authclientClient, validate, slogLogger)
+	httpHandler := handler.SetUpRouter(clientHandler, supplierHandler, productHandler, imageHandler, authHandler, authclientClient, slogLogger)
+	app := ProvideApp(configConfig, pool, httpHandler, slogLogger, clientConn, client)
 	return app
 }
 
 // wire.go:
 
+const productCacheTTL = 5 * time.Minute
+
 func ProvideApp(config2 *config.Config, pool *pgxpool.Pool,
 	router http.Handler, logger2 *slog.Logger,
-	authConn *grpc.ClientConn) *App {
+	authConn *grpc.ClientConn, redisClient *redis.Client) *App {
 	return &App{
-		config:   config2,
-		pool:     pool,
-		router:   router,
-		logger:   logger2,
-		authConn: authConn,
+		config:      config2,
+		pool:        pool,
+		router:      router,
+		logger:      logger2,
+		authConn:    authConn,
+		redisClient: redisClient,
 	}
 }
 
@@ -77,6 +85,23 @@ func ProvideValidatorOptions() []validator.Option {
 
 func ProvideConnString(cfg *config.Config) database.ConnString {
 	return database.ConnString(cfg.ConnString)
+}
+
+// ProvideRedisClient does not fail when Redis is down: the cache is optional,
+// so the app keeps serving requests from PostgreSQL.
+func ProvideRedisClient(ctx context.Context, cfg *config.Config, logger2 *slog.Logger) *redis.Client {
+	client := redis.NewClient(&redis.Options{Addr: cfg.RedisAddr})
+	pingCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+	if err := client.Ping(pingCtx).Err(); err != nil {
+		logger2.
+			Warn("redis is unavailable, product cache is disabled until it comes back", "addr", cfg.RedisAddr, "err", err)
+	}
+	return client
+}
+
+func ProvideCachedProductRepository(repo *postgres.PostgresProductRepository, redisClient *redis.Client, logger2 *slog.Logger) *cache.CachedProductRepository {
+	return cache.NewCachedProductRepository(repo, redisClient, productCacheTTL, logger2)
 }
 
 func ProvideAuthConn(cfg *config.Config) *grpc.ClientConn {

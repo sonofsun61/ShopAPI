@@ -12,20 +12,27 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 	"github.com/sonofsun61/APIFromSpec/internal/config"
 	"google.golang.org/grpc"
 )
 
 type App struct {
-	config   *config.Config
-	pool     *pgxpool.Pool
-	router   http.Handler
-	logger   *slog.Logger
-	authConn *grpc.ClientConn
+	config      *config.Config
+	pool        *pgxpool.Pool
+	router      http.Handler
+	logger      *slog.Logger
+	authConn    *grpc.ClientConn
+	redisClient *redis.Client
 }
 
 func (a *App) Run() error {
 	defer a.pool.Close()
+	defer func() {
+		if err := a.redisClient.Close(); err != nil {
+			a.logger.Error("failed to close redis client", "err", err)
+		}
+	}()
 	defer func() {
 		if err := a.authConn.Close(); err != nil {
 			a.logger.Error("failed to close auth connection", "err", err)
