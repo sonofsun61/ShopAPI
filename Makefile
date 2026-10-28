@@ -1,16 +1,14 @@
-include .env
+-include .env
 export
 
 BIN_DIR := $(CURDIR)/bin
 MIGRATE_VERSION ?= v4.20.1
 MIGRATE := $(BIN_DIR)/migrate-$(MIGRATE_VERSION)
 
-export
-
-.PHONY: db-up db-down migrate-up migrate-down lint test wire run swag
+.PHONY: db-up db-down migrate-up migrate-down lint test wire run swag up down docker-build
 
 run: db-up migrate-up
-	@go run ./cmd/ShopAPI/main.go
+	@go run ./cmd/ShopAPI
 
 db-up:
 	@docker compose up -d
@@ -40,3 +38,12 @@ wire:
 
 swag:
 	@go tool swag init -g cmd/ShopAPI/main.go
+
+up:
+	@docker compose --profile full up -d --build --wait
+
+down:
+	@docker compose --profile full down
+
+docker-build:
+	@docker build -t shopapi:dev .

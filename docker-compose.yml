@@ -9,9 +9,90 @@ services:
       - "5432:5432"
     volumes:
       - postgres-volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres-user -d postgres-db"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
   redis:
     image: redis:7
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  migrate:
+    profiles: ["full"]
+    image: migrate/migrate:v4.20.1
+    volumes:
+      - ./migrations:/migrations:ro
+    command: ["-path=/migrations", "-database=postgres://postgres-user:postgres-password@postgres:5432/postgres-db?sslmode=disable", "up"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  auth-postgres:
+    profiles: ["full"]
+    image: postgres:16
+    environment:
+      POSTGRES_USER: auth-user
+      POSTGRES_PASSWORD: auth-password
+      POSTGRES_DB: auth-db
+    volumes:
+      - auth-postgres-volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U auth-user -d auth-db"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  auth-migrate:
+    profiles: ["full"]
+    image: migrate/migrate:v4.20.1
+    volumes:
+      - ../GRPCAuth/migrations:/migrations:ro
+    command: ["-path=/migrations", "-database=postgres://auth-user:auth-password@auth-postgres:5432/auth-db?sslmode=disable", "up"]
+    depends_on:
+      auth-postgres:
+        condition: service_healthy
+
+  grpcauth:
+    profiles: ["full"]
+    build: ../GRPCAuth
+    environment:
+      POSTGRES_URL: postgres://auth-user:auth-password@auth-postgres:5432/auth-db?sslmode=disable
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret}
+    depends_on:
+      auth-migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  shopapi:
+    profiles: ["full"]
+    build: .
+    environment:
+      DATABASE_HOST: postgres
+      DATABASE_PORT: "5432"
+      DATABASE_USER: postgres-user
+      DATABASE_PASSWORD: postgres-password
+      DATABASE_NAME: postgres-db
+      AUTH_SERVICE_ADDR: grpcauth:50051
+      REDIS_ADDR: redis:6379
+    ports:
+      - "8080:8080"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      grpcauth:
+        condition: service_started
+    restart: unless-stopped
+
 volumes:
   postgres-volume:
+  auth-postgres-volume:
