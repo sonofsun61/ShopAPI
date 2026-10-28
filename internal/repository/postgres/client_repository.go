@@ -30,7 +30,7 @@ func (r *PostgresClientRepository) CreateClient(ctx context.Context, newClientDa
 	err = tx.QueryRow(ctx, `INSERT INTO address(country, city, street)
 							VALUES ($1, $2, $3)
 							RETURNING id`,
-	country, city, street).Scan(&newAddressID)
+		country, city, street).Scan(&newAddressID)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("could not scan address id into variable: %v", err)
 	}
@@ -38,13 +38,13 @@ func (r *PostgresClientRepository) CreateClient(ctx context.Context, newClientDa
 	err = tx.QueryRow(ctx, `INSERT INTO client(client_name, client_surname, birthday,
 												gender, address_id)
 							VALUES ($1, $2, $3, $4, $5)
-							RETURNING id`, 
-	newClientData.ClientName, newClientData.ClientSurname, newClientData.Birthday, newClientData.Gender, newAddressID).Scan(&newClientID)
+							RETURNING id`,
+		newClientData.ClientName, newClientData.ClientSurname, newClientData.Birthday, newClientData.Gender, newAddressID).Scan(&newClientID)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("could not scan client id into variable: %v", err)
 	}
 	if err := tx.Commit(ctx); err != nil {
-    	return uuid.Nil, fmt.Errorf("could not commit transaction: %v", err)
+		return uuid.Nil, fmt.Errorf("could not commit transaction: %v", err)
 	}
 	return newClientID, nil
 }
@@ -129,13 +129,13 @@ func (r *PostgresClientRepository) UpdateClientAddress(ctx context.Context, clie
 	}
 	tag, err := tx.Exec(ctx, "UPDATE client SET address_id = $1 WHERE id = $2", newAddressID, clientID)
 	if err != nil {
-    	return fmt.Errorf("could not update client address: %v", err)
+		return fmt.Errorf("could not update client address: %v", err)
 	}
 	if tag.RowsAffected() == 0 {
 		return pgx.ErrNoRows
 	}
 	if err := tx.Commit(ctx); err != nil {
-    	return fmt.Errorf("could not commit transaction: %v", err)
+		return fmt.Errorf("could not commit transaction: %v", err)
 	}
 	return nil
 }

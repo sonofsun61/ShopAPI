@@ -9,30 +9,30 @@ import (
 func ProductToDTO(product entity.Product) dto.ProductResponse {
 	links := map[string]dto.Link{
 		"self": {
-			Href: routes.ProductsBasePath + "/" + product.ID.String(),
+			Href:   routes.ProductsBasePath + "/" + product.ID.String(),
 			Method: "GET",
 		},
 		"decrease_stock": {
-			Href: routes.ProductsBasePath + "/" + product.ID.String(),
+			Href:   routes.ProductsBasePath + "/" + product.ID.String(),
 			Method: "PATCH",
 		},
 		"delete": {
-			Href: routes.ProductsBasePath + "/" + product.ID.String(),
+			Href:   routes.ProductsBasePath + "/" + product.ID.String(),
 			Method: "DELETE",
 		},
 		"add_image": {
-			Href: routes.ProductsBasePath + "/" + product.ID.String() + "/image",
+			Href:   routes.ProductsBasePath + "/" + product.ID.String() + "/image",
 			Method: "POST",
 		},
 	}
 	productData := dto.ProductResponse{
-		ID: product.ID,
-		ProductName: product.ProductName,
-		CategoryID: product.CategoryID,
-		Price: product.Price,
+		ID:             product.ID,
+		ProductName:    product.ProductName,
+		CategoryID:     product.CategoryID,
+		Price:          product.Price,
 		AvailableStock: product.AvailableStock,
-		SupplierID: product.SupplierID,
-		Links: links,
+		SupplierID:     product.SupplierID,
+		Links:          links,
 	}
 	return productData
 }

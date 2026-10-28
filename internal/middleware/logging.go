@@ -23,10 +23,10 @@ func Logging(logger *slog.Logger) func(http.Handler) http.Handler {
 			case status >= 400:
 				level = slog.LevelWarn
 			}
-			logger.Log(r.Context(), level, "http request", 
-				"method", r.Method, 
-				"path", r.URL.Path, 
-				"status", ww.Status(), 
+			logger.Log(r.Context(), level, "http request",
+				"method", r.Method,
+				"path", r.URL.Path,
+				"status", ww.Status(),
 				"duration_ms", float64(time.Since(start).Microseconds())/1000,
 			)
 		})

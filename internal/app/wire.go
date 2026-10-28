@@ -8,11 +8,14 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/wire"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 	"github.com/sonofsun61/APIFromSpec/internal/authclient"
+	"github.com/sonofsun61/APIFromSpec/internal/cache"
 	"github.com/sonofsun61/APIFromSpec/internal/config"
 	"github.com/sonofsun61/APIFromSpec/internal/database"
 	"github.com/sonofsun61/APIFromSpec/internal/handler"
@@ -37,7 +40,9 @@ func InitializeApp() *App {
 		postgres.NewPostgresSupplierRepository,
 		wire.Bind(new(service.SupplierRepository), new(*postgres.PostgresSupplierRepository)),
 		postgres.NewPostgresProductRepository,
-		wire.Bind(new(service.ProductRepository), new(*postgres.PostgresProductRepository)),
+		ProvideRedisClient,
+		ProvideCachedProductRepository,
+		wire.Bind(new(service.ProductRepository), new(*cache.CachedProductRepository)),
 		postgres.NewPostgresImageRepository,
 		wire.Bind(new(service.ImageRepository), new(*postgres.PostgresImageRepository)),
 		service.NewClientService,
@@ -63,15 +68,18 @@ func InitializeApp() *App {
 	return nil
 }
 
-func ProvideApp(config *config.Config, pool *pgxpool.Pool, 
-		router http.Handler, logger *slog.Logger, 
-		authConn *grpc.ClientConn) *App {
+const productCacheTTL = 5 * time.Minute
+
+func ProvideApp(config *config.Config, pool *pgxpool.Pool,
+	router http.Handler, logger *slog.Logger,
+	authConn *grpc.ClientConn, redisClient *redis.Client) *App {
 	return &App{
-		config: config,
-		pool:   pool,
-		router: router,
-		logger: logger,
-		authConn: authConn,
+		config:      config,
+		pool:        pool,
+		router:      router,
+		logger:      logger,
+		authConn:    authConn,
+		redisClient: redisClient,
 	}
 }
 
@@ -85,6 +93,20 @@ func ProvideValidatorOptions() []validator.Option {
 
 func ProvideConnString(cfg *config.Config) database.ConnString {
 	return database.ConnString(cfg.ConnString)
+}
+
+func ProvideRedisClient(ctx context.Context, cfg *config.Config, logger *slog.Logger) *redis.Client {
+	client := redis.NewClient(&redis.Options{Addr: cfg.RedisAddr})
+	pingCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+	if err := client.Ping(pingCtx).Err(); err != nil {
+		logger.Warn("redis is unavailable, product cache is disabled until it comes back", "addr", cfg.RedisAddr, "err", err)
+	}
+	return client
+}
+
+func ProvideCachedProductRepository(repo *postgres.PostgresProductRepository, redisClient *redis.Client, logger *slog.Logger) *cache.CachedProductRepository {
+	return cache.NewCachedProductRepository(repo, redisClient, productCacheTTL, logger)
 }
 
 func ProvideAuthConn(cfg *config.Config) *grpc.ClientConn {

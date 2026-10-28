@@ -10,6 +10,7 @@ import (
 type Config struct {
 	ConnString      string
 	AuthServiceAddr string
+	RedisAddr       string
 }
 
 func MustLoadConfig() *Config {
@@ -21,11 +22,13 @@ func MustLoadConfig() *Config {
 	port := os.Getenv("DATABASE_PORT")
 	dbName := os.Getenv("DATABASE_NAME")
 	authAddr := os.Getenv("AUTH_SERVICE_ADDR")
+	redisAddr := os.Getenv("REDIS_ADDR")
 	if authAddr == "" {
 		panic("AUTH_SERVICE_ADDR is not set")
 	}
 	return &Config{
 		ConnString:      fmt.Sprintf("postgres://%s:%s@localhost:%s/%s?sslmode=disable", username, password, port, dbName),
 		AuthServiceAddr: authAddr,
+		RedisAddr:       redisAddr,
 	}
 }

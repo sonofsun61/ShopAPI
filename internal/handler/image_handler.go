@@ -25,14 +25,14 @@ type ImageService interface {
 type ImageHandler struct {
 	service  ImageService
 	validate *validator.Validate
-	logger *slog.Logger
+	logger   *slog.Logger
 }
 
 func NewImageHandler(service ImageService, validate *validator.Validate, logger *slog.Logger) *ImageHandler {
 	return &ImageHandler{
 		service:  service,
 		validate: validate,
-		logger: logger,
+		logger:   logger,
 	}
 }
 
@@ -40,12 +40,15 @@ func NewImageHandler(service ImageService, validate *validator.Validate, logger 
 // @Summary Add an image to a product
 // @Description Uploads raw image bytes and links them to the given product, in a single transaction
 // @Tags images
+// @Security BearerAuth
 // @Accept octet-stream
 // @Param id path string true "Product ID"
 // @Success 201 "Image added successfully"
 // @Failure 400 {string} string "invalid id format or failed to read request body"
+// @Failure 401 {string} string "missing or invalid token"
 // @Failure 404 {string} string "product not found"
 // @Failure 500 {string} string "internal server error"
+// @Failure 503 {string} string "authentication service unavailable"
 // @Router /products/{id}/image [post]
 func (h *ImageHandler) AddImage(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
@@ -75,12 +78,15 @@ func (h *ImageHandler) AddImage(w http.ResponseWriter, r *http.Request) {
 // @Summary Replace an existing image
 // @Description Replaces the bytes of an existing image by its ID
 // @Tags images
+// @Security BearerAuth
 // @Accept octet-stream
 // @Param id path string true "Image ID"
 // @Success 204 "Image updated successfully"
 // @Failure 400 {string} string "invalid id format or failed to read request body"
 // @Failure 404 {string} string "image not found"
+// @Failure 401 {string} string "missing or invalid token"
 // @Failure 500 {string} string "internal server error"
+// @Failure 503 {string} string "authentication service unavailable"
 // @Router /images/{id} [patch]
 func (h *ImageHandler) ChangeImage(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
@@ -110,11 +116,14 @@ func (h *ImageHandler) ChangeImage(w http.ResponseWriter, r *http.Request) {
 // @Summary Delete an image by ID
 // @Description Deletes an image by its unique identifier; the owning product's image_id is set to null
 // @Tags images
+// @Security BearerAuth
 // @Param id path string true "Image ID"
 // @Success 204 "Image deleted successfully"
 // @Failure 400 {string} string "invalid id format"
+// @Failure 401 {string} string "missing or invalid token"
 // @Failure 404 {string} string "image not found"
 // @Failure 500 {string} string "internal server error"
+// @Failure 503 {string} string "authentication service unavailable"
 // @Router /images/{id} [delete]
 func (h *ImageHandler) DeleteImage(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
@@ -139,12 +148,15 @@ func (h *ImageHandler) DeleteImage(w http.ResponseWriter, r *http.Request) {
 // @Summary Get a product's image
 // @Description Returns the raw image bytes linked to the given product
 // @Tags images
+// @Security BearerAuth
 // @Produce octet-stream
 // @Param id path string true "Product ID"
 // @Success 200 {file} file
 // @Failure 400 {string} string "invalid id format"
+// @Failure 401 {string} string "missing or invalid token"
 // @Failure 404 {string} string "product not found or has no image"
 // @Failure 500 {string} string "internal server error"
+// @Failure 503 {string} string "authentication service unavailable"
 // @Router /products/{id}/image [get]
 func (h *ImageHandler) GetImageByProductID(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
@@ -174,12 +186,15 @@ func (h *ImageHandler) GetImageByProductID(w http.ResponseWriter, r *http.Reques
 // @Summary Get an image by ID
 // @Description Returns the raw image bytes by the image's unique identifier
 // @Tags images
+// @Security BearerAuth
 // @Produce octet-stream
 // @Param id path string true "Image ID"
 // @Success 200 {file} file
 // @Failure 400 {string} string "invalid id format"
+// @Failure 401 {string} string "missing or invalid token"
 // @Failure 404 {string} string "image not found"
 // @Failure 500 {string} string "internal server error"
+// @Failure 503 {string} string "authentication service unavailable"
 // @Router /images/{id} [get]
 func (h *ImageHandler) GetImageByImageID(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")

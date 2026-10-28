@@ -8,28 +8,28 @@ import (
 
 func ClientWithAddressToDTO(client entity.ClientWithAddress) dto.ClientResponse {
 	address := dto.AddressResponse{
-			Country: client.Country,
-			City: client.City,
-			Street: client.Street,
-		}
+		Country: client.Country,
+		City:    client.City,
+		Street:  client.Street,
+	}
 	links := map[string]dto.Link{
 		"delete": {
-			Href: routes.ClientsBasePath + "/" + client.ID.String(),
+			Href:   routes.ClientsBasePath + "/" + client.ID.String(),
 			Method: "DELETE",
 		},
 		"update_address": {
-			Href: routes.ClientsBasePath + "/" + client.ID.String(),
+			Href:   routes.ClientsBasePath + "/" + client.ID.String(),
 			Method: "PATCH",
 		},
 	}
 	clientData := dto.ClientResponse{
-		ID: client.ID,
-		ClientName: client.ClientName,
+		ID:            client.ID,
+		ClientName:    client.ClientName,
 		ClientSurname: client.ClientSurname,
-		Birthday: client.Birthday,
-		Gender: client.Gender,
-		Address: address,
-		Links: links,
+		Birthday:      client.Birthday,
+		Gender:        client.Gender,
+		Address:       address,
+		Links:         links,
 	}
 	return clientData
 }
