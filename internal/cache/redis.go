@@ -29,6 +29,18 @@ func NewCachedProductRepository(postgresRepo service.ProductRepository, redisCli
 	}
 }
 
+func NewRedisClient(addr string) *redis.Client {
+	client := redis.NewClient(&redis.Options{
+		Addr:          addr,
+		MaxRetries:    -1,
+		DialerRetries: 1,
+		DialTimeout:   200 * time.Millisecond,
+		ReadTimeout:   200 * time.Millisecond,
+		WriteTimeout:  200 * time.Millisecond,
+	})
+	return client
+}
+
 var _ service.ProductRepository = (*CachedProductRepository)(nil)
 
 func (r *CachedProductRepository) CreateProduct(ctx context.Context, newProductData entity.NewProductData) (entity.Product, error) {

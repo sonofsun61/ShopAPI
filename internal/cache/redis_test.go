@@ -11,7 +11,6 @@ import (
 	"github.com/alicebob/miniredis/v2"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/redis/go-redis/v9"
 	"github.com/shopspring/decimal"
 	"github.com/sonofsun61/APIFromSpec/internal/cache"
 	"github.com/sonofsun61/APIFromSpec/internal/entity"
@@ -68,7 +67,7 @@ type testEnv struct {
 func newTestEnv(t *testing.T) testEnv {
 	t.Helper()
 	mr := miniredis.RunT(t)
-	client := redis.NewClient(&redis.Options{Addr: mr.Addr()})
+	client := cache.NewRedisClient(mr.Addr())
 	t.Cleanup(func() { _ = client.Close() })
 	repo := new(mockProductRepo)
 	return testEnv{

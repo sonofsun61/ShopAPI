@@ -96,7 +96,7 @@ func ProvideConnString(cfg *config.Config) database.ConnString {
 }
 
 func ProvideRedisClient(ctx context.Context, cfg *config.Config, logger *slog.Logger) *redis.Client {
-	client := redis.NewClient(&redis.Options{Addr: cfg.RedisAddr})
+	client := cache.NewRedisClient(cfg.RedisAddr)
 	pingCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 	if err := client.Ping(pingCtx).Err(); err != nil {
