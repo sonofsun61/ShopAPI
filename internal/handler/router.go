@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	_ "github.com/sonofsun61/APIFromSpec/docs"
 	"github.com/sonofsun61/APIFromSpec/internal/middleware"
 	"github.com/sonofsun61/APIFromSpec/internal/routes"
@@ -17,6 +18,8 @@ func SetUpRouter(clientHandler *ClientHandler, supplierHandler *SupplierHandler,
 	logger *slog.Logger) http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.Logging(logger))
+	r.Use(middleware.Metrics)
+	r.Handle("/metrics", promhttp.Handler())
 	r.Get("/swagger/*", httpSwagger.WrapHandler)
 	r.Post(routes.RegisterBasePath, authHandler.Register)
 	r.Post(routes.AuthBasePath, authHandler.Login)
