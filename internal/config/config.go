@@ -14,8 +14,10 @@ type Config struct {
 }
 
 func MustLoadConfig() *Config {
-	if err := godotenv.Load(); err != nil {
-		panic("Could not load .env file")
+	_ = godotenv.Load()
+	host := os.Getenv("DATABASE_HOST")
+	if host == "" {
+		host = "localhost"
 	}
 	username := os.Getenv("DATABASE_USER")
 	password := os.Getenv("DATABASE_PASSWORD")
@@ -27,7 +29,7 @@ func MustLoadConfig() *Config {
 		panic("AUTH_SERVICE_ADDR is not set")
 	}
 	return &Config{
-		ConnString:      fmt.Sprintf("postgres://%s:%s@localhost:%s/%s?sslmode=disable", username, password, port, dbName),
+		ConnString:      fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", username, password, host, port, dbName),
 		AuthServiceAddr: authAddr,
 		RedisAddr:       redisAddr,
 	}

@@ -8,7 +8,10 @@ import (
 )
 
 func NewConn(addr string) (*grpc.ClientConn, error) {
-	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(addr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithDisableServiceConfig(),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create grpc connection: %w", err)
 	}

@@ -87,10 +87,8 @@ func ProvideConnString(cfg *config.Config) database.ConnString {
 	return database.ConnString(cfg.ConnString)
 }
 
-// ProvideRedisClient does not fail when Redis is down: the cache is optional,
-// so the app keeps serving requests from PostgreSQL.
 func ProvideRedisClient(ctx context.Context, cfg *config.Config, logger2 *slog.Logger) *redis.Client {
-	client := redis.NewClient(&redis.Options{Addr: cfg.RedisAddr})
+	client := cache.NewRedisClient(cfg.RedisAddr)
 	pingCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 	if err := client.Ping(pingCtx).Err(); err != nil {
